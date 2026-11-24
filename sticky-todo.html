@@ -1,0 +1,3346 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>To do</title>
+  <link rel="icon" href="todolist-favicon.ico" type="image/x-icon">
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
+  <meta name="theme-color" content="#0969da" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="To do" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: #fafbfc;
+      --fg: #1f2328;
+      --root-fg: #111827;
+      --muted: #8c959f;
+      --border: #e6e8eb;
+      --hover: #f6f8fa;
+      --accent: #0969da;
+      --accent-soft: #ddf4ff;
+      --note-bg: #f6f8fa;
+      --note-fg: #57606a;
+      --tag-bg: #f3f4f6;
+      --tag-fg: #57606a;
+      --p3: #cf222e;
+      --p3-bg: #ffebe9;
+      --p2: #d97706;
+      --p2-bg: #fff8c5;
+      --p1: #2da44e;
+      --p1-bg: #dafbe1;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: "Inter", "Segoe UI Variable", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 13.5px;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Toolbar compatta */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .toolbar-left, .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    button {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      padding: 3px 6px;
+      font-size: 11.5px;
+      color: var(--fg);
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+      white-space: nowrap;
+    }
+
+    button:hover:not(:disabled) {
+      background: var(--hover);
+      border-color: var(--border);
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    button.active {
+      background: var(--accent-soft);
+      border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    button.auto-linked {
+      background: var(--p1-bg);
+      border-color: color-mix(in srgb, var(--p1) 40%, transparent);
+      color: var(--p1);
+      font-weight: 600;
+    }
+
+    /* Drawer comunemente condivisi (Backup & Tema) */
+    .drawer-panel {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+      font-size: 11.5px;
+    }
+
+    .drawer-panel.open {
+      display: flex;
+    }
+
+    .drawer-section {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .drawer-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      color: var(--fg);
+      font-size: 11px;
+    }
+
+    /* Selettore Tema & Editor Colori */
+    .theme-mode-bar {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .theme-mode-btn {
+      flex: 1;
+      text-align: center;
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      border-radius: 5px;
+      font-size: 11.5px;
+    }
+
+    .theme-mode-btn.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .custom-theme-editor {
+      display: none;
+      flex-direction: column;
+      gap: 7px;
+      padding: 7px 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+
+    .custom-theme-editor.open {
+      display: flex;
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 5px 10px;
+    }
+
+    .color-field {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--fg);
+    }
+
+    .color-field label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .color-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .color-picker {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 18px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: none;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .color-picker::-webkit-color-swatch-wrapper { padding: 0; }
+    .color-picker::-webkit-color-swatch { border: none; border-radius: 3px; }
+
+    .color-hex {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10px;
+      color: var(--muted);
+      width: 52px;
+      text-transform: uppercase;
+    }
+
+    .custom-theme-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding-top: 4px;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .preset-name-input {
+      flex: 1;
+      min-width: 110px;
+      padding: 3px 6px;
+      font-size: 11px;
+      color: var(--fg);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      outline: none;
+    }
+
+    .preset-name-input:focus {
+      border-color: var(--accent);
+    }
+
+    .saved-presets-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .preset-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-size: 10.5px;
+      color: var(--fg);
+      cursor: pointer;
+    }
+
+    .preset-pill:hover {
+      border-color: var(--accent);
+    }
+
+    .preset-swatch {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      border: 1px solid rgba(128,128,128,0.35);
+      display: inline-block;
+    }
+
+    .preset-del {
+      color: var(--muted);
+      font-size: 10px;
+      padding: 0 2px;
+      border: none;
+    }
+
+    .preset-del:hover {
+      color: var(--p3);
+      background: transparent;
+    }
+
+    /* Sezione Snapshot, Auto-Backup & Esportazione Completa */
+    .autobackup-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 5px 7px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+    }
+
+    .autobackup-status {
+      color: var(--muted);
+      font-size: 11px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .autobackup-status strong {
+      color: var(--p1);
+    }
+
+    .full-export-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 5px 7px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+    }
+
+    .full-export-info {
+      color: var(--muted);
+      font-size: 11px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .snapshot-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 145px;
+      overflow-y: auto;
+    }
+
+    .snapshot-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 4px 7px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+    }
+
+    .snapshot-meta {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .snapshot-reason {
+      font-weight: 500;
+      color: var(--fg);
+      font-size: 11.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .snapshot-sub {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .snapshot-actions {
+      display: flex;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .snapshot-empty {
+      color: var(--muted);
+      font-size: 11px;
+      text-align: center;
+      padding: 6px;
+    }
+
+    /* Toast feedback non invasivo */
+    .toast-banner {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: #24292f;
+      color: #ffffff;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      z-index: 999;
+      max-width: 90%;
+      text-align: center;
+    }
+
+    .toast-banner.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast-banner.error {
+      background: var(--p3);
+    }
+
+    /* Barra Ricerca e Filtri */
+    .filter-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      flex-shrink: 0;
+    }
+
+    .search-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      position: relative;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 4px 24px 4px 8px;
+      font-family: inherit;
+      font-size: 12px;
+      color: var(--fg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: var(--surface);
+      outline: none;
+      transition: border-color 0.12s, background 0.12s;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+      background: var(--bg);
+    }
+
+    .clear-search-btn {
+      position: absolute;
+      right: 4px;
+      padding: 1px 5px;
+      font-size: 11px;
+      color: var(--muted);
+      border: none;
+      display: none;
+    }
+
+    .clear-search-btn.visible {
+      display: inline-block;
+    }
+
+    .filter-chips {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      font-size: 10.5px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+    }
+
+    .filter-chip:hover {
+      background: var(--hover);
+      color: var(--fg);
+    }
+
+    .filter-chip.active {
+      background: var(--accent-soft);
+      border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .filter-chip.p3.active {
+      background: var(--p3-bg);
+      border-color: color-mix(in srgb, var(--p3) 45%, transparent);
+      color: var(--p3);
+    }
+    .filter-chip.p2.active {
+      background: var(--p2-bg);
+      border-color: color-mix(in srgb, var(--p2) 45%, transparent);
+      color: var(--p2);
+    }
+    .filter-chip.p1.active {
+      background: var(--p1-bg);
+      border-color: color-mix(in srgb, var(--p1) 45%, transparent);
+      color: var(--p1);
+    }
+
+    /* Area principale scrollabile */
+    .tree-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 10px 24px 6px;
+    }
+
+    /* Dropzone livello principale durante drag */
+    .root-dropzone {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 8px;
+      margin: 4px 4px 4px 18px;
+      border: 1.5px dashed var(--muted);
+      border-radius: 5px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    body.is-dragging .root-dropzone {
+      display: flex;
+    }
+
+    .root-dropzone.drag-over {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Righe ad albero */
+    .node-wrapper {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .node-row {
+      display: flex;
+      align-items: flex-start;
+      padding: 2px 4px;
+      border-radius: 4px;
+      gap: 5px;
+      position: relative;
+    }
+
+    .node-row:hover {
+      background: var(--hover);
+    }
+
+    .node-row.is-context-only .node-text {
+      opacity: 0.6;
+    }
+
+    .node-row.is-suspended .node-text {
+      opacity: 0.68;
+      font-style: italic;
+    }
+
+    .suspended-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 9px;
+      background: var(--p2-bg);
+      color: var(--p2);
+      border: 1px solid color-mix(in srgb, var(--p2) 35%, transparent);
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 2px;
+      user-select: none;
+    }
+
+    .suspended-pill:hover {
+      border-color: var(--p2);
+    }
+
+    .suspend-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 3px;
+      margin-bottom: 2px;
+      padding: 4px 7px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 2px solid var(--p2);
+      border-radius: 0 4px 4px 0;
+      font-size: 11px;
+      color: var(--note-fg);
+    }
+
+    .suspend-date-input {
+      font-family: inherit;
+      font-size: 11px;
+      color: var(--fg);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 5px;
+      outline: none;
+    }
+
+    .suspend-date-input:focus {
+      border-color: var(--accent);
+    }
+
+    .toggle-btn {
+      width: 14px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      color: var(--muted);
+      cursor: pointer;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .toggle-btn.empty {
+      visibility: hidden;
+    }
+
+    .checkbox {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      margin-top: 3px;
+      border: 1.4px solid var(--muted);
+      border-radius: 50%;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: grid;
+      place-content: center;
+      transition: all 0.12s;
+      background: transparent;
+    }
+
+    .checkbox:hover { border-color: var(--accent); }
+    .checkbox:checked { background: var(--accent); border-color: var(--accent); }
+    .checkbox:checked::after {
+      content: "";
+      width: 4px;
+      height: 7px;
+      border: solid #ffffff;
+      border-width: 0 1.6px 1.6px 0;
+      transform: rotate(45deg);
+      margin-bottom: 1px;
+    }
+
+    .node-content {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .node-text {
+      color: var(--fg);
+      line-height: 1.45;
+      letter-spacing: -0.006em;
+      outline: none;
+      word-break: break-word;
+    }
+
+    .node-row.is-root .node-text { 
+      color: var(--root-fg);
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+      
+    .node-row.is-done .node-text { text-decoration: line-through; color: var(--muted); }
+
+    /* Note per singola riga */
+    .node-note-box {
+      margin-top: 3px;
+      margin-bottom: 2px;
+      padding: 4px 7px;
+      border-left: 2px solid var(--accent);
+      background: var(--note-bg);
+      border-radius: 0 4px 4px 0;
+      font-size: 12px;
+      line-height: 1.4;
+      color: var(--note-fg);
+      outline: none;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .node-note-box:focus {
+      background: var(--accent-soft);
+      border-left-color: var(--accent);
+      color: var(--fg);
+    }
+
+    .node-note-box:empty::before {
+      content: attr(data-placeholder);
+      color: var(--muted);
+      font-style: italic;
+      pointer-events: none;
+    }
+
+    .row-actions {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .note-btn, .outdent-btn, .suspend-btn {
+      opacity: 0;
+      font-size: 11px;
+      line-height: 1;
+      padding: 2px 4px;
+      border-radius: 3px;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .node-row:hover .note-btn,
+    .node-row:hover .outdent-btn,
+    .node-row:hover .suspend-btn,
+    .note-btn.has-note,
+    .note-btn.is-open,
+    .suspend-btn.is-suspended,
+    .suspend-btn.is-open {
+      opacity: 1;
+    }
+
+    .note-btn.has-note {
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .note-btn.is-open {
+      color: var(--accent);
+      background: var(--accent-soft);
+      border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+    }
+
+    .suspend-btn.is-suspended,
+    .suspend-btn.is-open {
+      color: var(--p2);
+      background: var(--p2-bg);
+      border-color: color-mix(in srgb, var(--p2) 45%, transparent);
+    }
+
+    .note-btn:hover, .outdent-btn:hover {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .suspend-btn:hover {
+      background: var(--p2-bg);
+      color: var(--p2);
+    }
+
+    .prio-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 3px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.12s;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .node-row:hover .prio-badge,
+    .prio-badge[data-prio="1"],
+    .prio-badge[data-prio="2"],
+    .prio-badge[data-prio="3"] {
+      opacity: 1;
+    }
+
+    .prio-badge[data-prio="0"] { color: var(--muted); background: var(--tag-bg); }
+    .prio-badge[data-prio="1"] { color: var(--p1); background: var(--p1-bg); }
+    .prio-badge[data-prio="2"] { color: var(--p2); background: var(--p2-bg); }
+    .prio-badge[data-prio="3"] { color: var(--p3); background: var(--p3-bg); }
+
+    .children-container { padding-left: 20px; }
+    .children-container.collapsed { display: none; }
+
+    /* Sezioni vista Priorità */
+    .prio-section { margin-bottom: 12px; }
+    .prio-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 4px 6px;
+      margin-bottom: 4px;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .prio-section-title.p3 { color: var(--p3); background: var(--p3-bg); }
+    .prio-section-title.p2 { color: var(--p2); background: var(--p2-bg); }
+    .prio-section-title.p1 { color: var(--p1); background: var(--p1-bg); }
+    .prio-section-title.p0 { color: var(--fg); background: var(--surface); border: 1px solid var(--border); }
+    .prio-section-title.done { color: var(--muted); background: var(--surface); }
+
+    .category-tag {
+      font-size: 10.5px;
+      color: var(--tag-fg);
+      background: var(--tag-bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1px 6px;
+      margin-top: 2px;
+      flex-shrink: 0;
+      max-width: 145px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .category-tag.clickable { cursor: pointer; }
+    .category-tag.clickable:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Drag & Drop */
+    .node-row.dragging { opacity: 0.4; }
+    .node-row.drag-over-top { box-shadow: inset 0 2px 0 var(--accent); }
+    .node-row.drag-over-bottom { box-shadow: inset 0 -2px 0 var(--accent); }
+    .node-row.drag-over-inside { background: var(--accent-soft); outline: 1.5px dashed var(--accent); }
+
+    /* Vista Archivio */
+    .archive-header {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+      padding: 0 4px;
+    }
+
+    .archive-search {
+      flex: 1;
+      padding: 5px 8px;
+      font-size: 12px;
+      color: var(--fg);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      outline: none;
+    }
+
+    .archive-search:focus { border-color: var(--accent); background: var(--bg); }
+
+    .archive-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 7px 8px;
+      margin: 0 4px 6px 4px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+    }
+
+    .archive-item-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .archive-item-text {
+      font-size: 13px;
+      color: var(--fg);
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .archive-item-note {
+      font-size: 11.5px;
+      color: var(--note-fg);
+      background: var(--bg);
+      border-left: 2px solid var(--muted);
+      padding: 3px 6px;
+      border-radius: 0 3px 3px 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .archive-item-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .archive-badges {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .archive-date { font-size: 10.5px; color: var(--muted); }
+    .archive-actions { display: flex; gap: 2px; }
+
+    .archive-empty {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 36px 16px;
+      line-height: 1.5;
+      white-space: pre-line;
+    }
+
+    /* Footer scorciatoie */
+    .hint-bar {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 8px;
+      font-size: 10.5px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+      gap: 6px;
+    }
+
+    /* Maggiore separazione tra categorie "cappello" */
+    .tree-container > .node-wrapper + .node-wrapper {
+      margin-top: 8px;
+    }
+
+    .node-row.is-root {
+      padding-top: 3px;
+      padding-bottom: 3px;
+    }
+  </style>
+</head>
+<body>
+  <header class="toolbar">
+    <div class="toolbar-left">
+      <button id="btn-add-root" title="Nuova categoria / task">+ Voce</button>
+      <button id="btn-sort-priority" title="Ordina per priorità globale">Priorità: Manuale</button>
+      <button id="btn-archive-now" title="Archivia subito tutte le voci completate">📥 Archivia</button>
+    </div>
+    <div class="toolbar-right">
+      <button id="btn-view-archive" title="Apri/Chiudi Archivio">📦 (0)</button>
+      <button id="btn-theme" title="Tema e colori personalizzati">🎨</button>
+      <button id="btn-snapshots" title="Snapshot locali, auto-backup ed esportazione completa">🕒 (0)</button>
+      <button id="btn-export" title="Esporta backup JSON (task + archivio)">💾</button>
+      <button id="btn-import" title="Importa backup JSON (standard o completo)">📂</button>
+      <input type="file" id="file-import" accept=".json" style="display:none" />
+    </div>
+  </header>
+
+  <!-- Pannello Tema & Colori -->
+  <section class="drawer-panel" id="theme-drawer">
+    <div class="drawer-section">
+      <div class="drawer-section-header">
+        <span>Tema interfaccia</span>
+      </div>
+      <div class="theme-mode-bar" id="theme-mode-bar">
+        <button class="theme-mode-btn" data-theme-mode="light">☀️ Chiaro</button>
+        <button class="theme-mode-btn" data-theme-mode="dark">🌙 Scuro</button>
+        <button class="theme-mode-btn" data-theme-mode="custom">🎛️ Personalizzato</button>
+      </div>
+    </div>
+
+    <div class="custom-theme-editor" id="custom-theme-editor">
+      <div class="drawer-section-header">
+        <span>Personalizza colori (anteprima live)</span>
+        <div style="display:flex; gap:4px;">
+          <button id="btn-clone-light" title="Parti dai colori del tema Chiaro">Base Chiaro</button>
+          <button id="btn-clone-dark" title="Parti dai colori del tema Scuro">Base Scuro</button>
+        </div>
+      </div>
+
+      <div class="color-grid" id="color-grid"></div>
+
+      <div class="custom-theme-footer">
+        <input type="text" id="preset-name-input" class="preset-name-input" placeholder="Nome tema da salvare..." maxlength="28" />
+        <button id="btn-save-preset" title="Salva questo schema colori nei tuoi temi">💾 Salva tema</button>
+      </div>
+
+      <div class="saved-presets-row" id="saved-presets-row"></div>
+    </div>
+  </section>
+
+  <!-- Pannello Snapshot, Auto-backup & Esportazione Completa -->
+  <section class="drawer-panel" id="backup-drawer">
+    <div class="drawer-section">
+      <div class="drawer-section-header">
+        <span>Pacchetto completo (migrazione PC / browser)</span>
+      </div>
+      <div class="full-export-row">
+        <span class="full-export-info" id="full-export-info">Task, archivio, istantanee e temi</span>
+        <button id="btn-export-full" title="Scarica un unico file JSON con task, archivio, istantanee locali e temi personalizzati">📦 Esporta tutto</button>
+      </div>
+    </div>
+
+    <div class="drawer-section" id="autobackup-section">
+      <div class="drawer-section-header">
+        <span>Auto-backup su file locale</span>
+      </div>
+      <div class="autobackup-row">
+        <span class="autobackup-status" id="autobackup-status">Nessun file collegato</span>
+        <div style="display:flex; gap:3px; flex-shrink:0;">
+          <button id="btn-link-file" title="Collega un file .json locale per il salvataggio automatico">Collega file</button>
+          <button id="btn-unlink-file" style="display:none" title="Scollega file automatico">Scollega</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="drawer-section">
+      <div class="drawer-section-header">
+        <span>Istantanee locali (ultimi 5 salvataggi)</span>
+        <button id="btn-create-snapshot" title="Crea subito una istantanea manuale">+ Istantanea</button>
+      </div>
+      <div class="snapshot-list" id="snapshot-list"></div>
+    </div>
+  </section>
+
+  <section class="filter-bar" id="filter-bar">
+    <div class="search-row">
+      <input type="text" id="task-search" class="search-input" placeholder="Cerca nei task e nelle note... (Ctrl+F)" />
+      <button id="btn-clear-search" class="clear-search-btn" title="Pulisci ricerca">✕</button>
+    </div>
+    <div class="filter-chips" id="filter-chips">
+      <button class="filter-chip active" data-filter-status="all">Tutte</button>
+      <button class="filter-chip" data-filter-status="active_all">Tutte non sospese</button>
+      <button class="filter-chip" data-filter-status="todo">Da fare</button>
+      <button class="filter-chip" data-filter-status="suspended">Sospese</button>
+      <button class="filter-chip" data-filter-status="notes">Con note</button>
+      <button class="filter-chip p3" data-filter-prio="3">P1</button>
+      <button class="filter-chip p2" data-filter-prio="2">P2</button>
+      <button class="filter-chip p1" data-filter-prio="1">P3</button>
+      <button class="filter-chip" id="btn-reset-filters" style="display:none" title="Azzera tutti i filtri">✕ Reset</button>
+    </div>
+  </section>
+
+  <main id="tree-container" class="tree-container"></main>
+
+  <footer class="hint-bar" id="hint-bar">
+    <span><b>Invio</b>: nuovo</span>
+    <span><b>Tab</b>: indenta</span>
+    <span><b>Alt+N</b>: nota</span>
+    <span><b>Alt+1/2/3</b>: prio</span>
+  </footer>
+
+  <div id="toast-banner" class="toast-banner" role="status" aria-live="polite"></div>
+
+  <script>
+    const STORAGE_KEY = "sticky_todo_html5_v1";
+    const SNAPSHOTS_KEY = "sticky_todo_snapshots_v1";
+    const THEME_STORAGE_KEY = "sticky_todo_theme_v1";
+    const MAX_SNAPSHOTS = 5;
+    const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+    const PRIO_LABELS = { 0: "·", 1: "P3", 2: "P2", 3: "P1" };
+
+    // --- Definizione Temi & Variabili Colore ---
+    const THEME_FIELDS = [
+      { key: "--bg", label: "Sfondo principale" },
+      { key: "--surface", label: "Barre e pannelli" },
+      { key: "--fg", label: "Testo voci" },
+      { key: "--root-fg", label: "Testo categorie" },
+      { key: "--muted", label: "Testo secondario" },
+      { key: "--border", label: "Bordi" },
+      { key: "--hover", label: "Sfondo passaggio mouse" },
+      { key: "--accent", label: "Colore accento" },
+      { key: "--accent-soft", label: "Accento tenue" },
+      { key: "--note-bg", label: "Sfondo note" },
+      { key: "--note-fg", label: "Testo note" },
+      { key: "--tag-bg", label: "Sfondo tag" },
+      { key: "--tag-fg", label: "Testo tag" },
+      { key: "--p3", label: "Priorità P1 (testo)" },
+      { key: "--p3-bg", label: "Priorità P1 (sfondo)" },
+      { key: "--p2", label: "Priorità P2 (testo)" },
+      { key: "--p2-bg", label: "Priorità P2 (sfondo)" },
+      { key: "--p1", label: "Priorità P3 (testo)" },
+      { key: "--p1-bg", label: "Priorità P3 (sfondo)" },
+    ];
+
+    const PRESET_THEMES = {
+      light: {
+        "--bg": "#ffffff",
+        "--surface": "#fafbfc",
+        "--fg": "#1f2328",
+        "--root-fg": "#111827",
+        "--muted": "#8c959f",
+        "--border": "#e6e8eb",
+        "--hover": "#f6f8fa",
+        "--accent": "#0969da",
+        "--accent-soft": "#ddf4ff",
+        "--note-bg": "#f6f8fa",
+        "--note-fg": "#57606a",
+        "--tag-bg": "#f3f4f6",
+        "--tag-fg": "#57606a",
+        "--p3": "#cf222e",
+        "--p3-bg": "#ffebe9",
+        "--p2": "#d97706",
+        "--p2-bg": "#fff8c5",
+        "--p1": "#2da44e",
+        "--p1-bg": "#dafbe1",
+      },
+      dark: {
+        "--bg": "#0d1117",
+        "--surface": "#161b22",
+        "--fg": "#e6edf3",
+        "--root-fg": "#ffffff",
+        "--muted": "#8b949e",
+        "--border": "#30363d",
+        "--hover": "#1f242c",
+        "--accent": "#58a6ff",
+        "--accent-soft": "#1f3a5f",
+        "--note-bg": "#161b22",
+        "--note-fg": "#b1bac4",
+        "--tag-bg": "#21262d",
+        "--tag-fg": "#c9d1d9",
+        "--p3": "#ff7b72",
+        "--p3-bg": "#3d1a1d",
+        "--p2": "#e3b341",
+        "--p2-bg": "#3b2e11",
+        "--p1": "#56d364",
+        "--p1-bg": "#14351d",
+      },
+    };
+
+    const DEFAULT_TASKS = [];
+
+    let state = {
+      view: "tasks",
+      sortByPriority: false,
+      archiveFilter: "",
+      searchQuery: "",
+      filterStatus: "all", // 'all' | 'active_all' | 'todo' | 'suspended' | 'notes'
+      filterPriority: null, // null | 1 | 2 | 3
+      openNoteIds: new Set(),
+      openSuspendIds: new Set(),
+      backupDrawerOpen: false,
+      themeDrawerOpen: false,
+      theme: {
+        mode: "light", // 'light' | 'dark' | 'custom'
+        customColors: { ...PRESET_THEMES.light },
+        savedPresets: [],
+      },
+      tasks: [],
+      archive: [],
+      snapshots: [],
+    };
+
+    let draggedId = null;
+    let toastTimer = null;
+
+    // File System Access API state
+    let autoBackupFileHandle = null;
+    let autoBackupTimer = null;
+    let lastAutoBackupTime = null;
+
+    // --- Feedback Visivo Non Invasivo (Toast) ---
+    function showToast(message, isError = false) {
+      const el = document.getElementById("toast-banner");
+      el.textContent = message;
+      el.classList.toggle("error", isError);
+      el.classList.add("visible");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        el.classList.remove("visible");
+      }, 3400);
+    }
+
+    // --- Gestione Date De-sospensione ---
+    function parseDateInputToTimestamp(dateStr) {
+      if (!dateStr || typeof dateStr !== "string") return null;
+      const parts = dateStr.split("-");
+      if (parts.length !== 3) return null;
+      const year = Number(parts[0]);
+      const month = Number(parts[1]) - 1;
+      const day = Number(parts[2]);
+      if (!year || month < 0 || month > 11 || day < 1 || day > 31) return null;
+      const dt = new Date(year, month, day, 0, 0, 0, 0);
+      return Number.isNaN(dt.getTime()) ? null : dt.getTime();
+    }
+
+    function formatDateInputValue(ts) {
+      if (!ts) return "";
+      const dt = new Date(ts);
+      if (Number.isNaN(dt.getTime())) return "";
+      const y = dt.getFullYear();
+      const m = String(dt.getMonth() + 1).padStart(2, "0");
+      const d = String(dt.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    function formatShortDay(ts) {
+      if (!ts) return "";
+      return new Date(ts).toLocaleDateString("it-IT", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "2-digit",
+      });
+    }
+
+    function processSuspendedNodes(nodes = state.tasks, now = Date.now()) {
+      let changed = false;
+      for (const node of nodes) {
+        if (node.suspended && typeof node.unsuspendAt === "number" && now >= node.unsuspendAt) {
+          node.suspended = false;
+          node.unsuspendAt = null;
+          state.openSuspendIds.delete(node.id);
+          changed = true;
+        }
+        if (node.children?.length) {
+          if (processSuspendedNodes(node.children, now)) {
+            changed = true;
+          }
+        }
+      }
+      return changed;
+    }
+
+    function toggleSuspendNode(id) {
+      const ctx = findNodeContext(id);
+      if (!ctx) return;
+      const node = ctx.node;
+
+      if (node.suspended) {
+        node.suspended = false;
+        node.unsuspendAt = null;
+        state.openSuspendIds.delete(node.id);
+        saveState();
+        render();
+        showToast("Voce riattivata");
+      } else {
+        node.suspended = true;
+        state.openSuspendIds.clear();
+        state.openSuspendIds.add(node.id);
+        saveState();
+        render();
+      }
+    }
+
+    function sanitizeEmptyOpenNotes() {
+      let changed = false;
+      for (const noteId of [...state.openNoteIds]) {
+        const ctx = findNodeContext(noteId);
+        if (!ctx) {
+          state.openNoteIds.delete(noteId);
+          continue;
+        }
+        if (!ctx.node.note || ctx.node.note.trim() === "") {
+          ctx.node.note = "";
+          changed = true;
+        }
+      }
+      if (changed) saveState();
+      return changed;
+    }
+
+    // Chiusura pannelli di sospensione e note al clic esterno (senza chiudere durante l'interazione interna o sul pulsante della stessa riga)
+    document.addEventListener("pointerdown", (e) => {
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+
+      let shouldRender = false;
+
+      if (state.openSuspendIds.size > 0) {
+        const inSuspendBar = Boolean(target.closest(".suspend-bar"));
+        const suspendTrigger = target.closest(".suspend-btn, .suspended-pill");
+        const suspendRowId = suspendTrigger?.closest(".node-row")?.dataset.id;
+        const isSameSuspendRow = Boolean(suspendRowId && state.openSuspendIds.has(suspendRowId));
+
+        if (!inSuspendBar && !isSameSuspendRow) {
+          state.openSuspendIds.clear();
+          shouldRender = true;
+        }
+      }
+
+      if (state.openNoteIds.size > 0) {
+        const inNoteBox = Boolean(target.closest(".node-note-box"));
+        const noteTrigger = target.closest(".note-btn");
+        const noteRowId = noteTrigger?.closest(".node-row")?.dataset.id;
+        const isSameNoteRow = Boolean(noteRowId && state.openNoteIds.has(noteRowId));
+
+        if (!inNoteBox && !isSameNoteRow) {
+          sanitizeEmptyOpenNotes();
+          state.openNoteIds.clear();
+          shouldRender = true;
+        }
+      }
+
+      if (shouldRender) {
+        render();
+      }
+    });
+
+    // --- Gestione Tema & Live Preview ---
+    function applyThemeColors(colors) {
+      const root = document.documentElement;
+      const merged = { ...PRESET_THEMES.light, ...colors };
+      for (const [varName, hex] of Object.entries(merged)) {
+        root.style.setProperty(varName, hex);
+      }
+    }
+
+    function applyCurrentTheme() {
+      let activeColors = PRESET_THEMES.light;
+      if (state.theme.mode === "dark") {
+        activeColors = PRESET_THEMES.dark;
+        applyThemeColors(PRESET_THEMES.dark);
+      } else if (state.theme.mode === "custom") {
+        activeColors = state.theme.customColors;
+        applyThemeColors(state.theme.customColors);
+      } else {
+        applyThemeColors(PRESET_THEMES.light);
+      }
+      const metaTheme = document.querySelector('meta[name="theme-color"]');
+      if (metaTheme && activeColors["--accent"]) {
+        metaTheme.setAttribute("content", activeColors["--accent"]);
+      }
+    }
+
+    function normalizeThemeObject(rawTheme) {
+      if (!rawTheme || typeof rawTheme !== "object") {
+        return {
+          mode: "light",
+          customColors: { ...PRESET_THEMES.light },
+          savedPresets: [],
+        };
+      }
+      const mode = ["light", "dark", "custom"].includes(rawTheme.mode)
+        ? rawTheme.mode
+        : "light";
+      const customColors = {
+        ...PRESET_THEMES.light,
+        ...(rawTheme.customColors && typeof rawTheme.customColors === "object"
+          ? rawTheme.customColors
+          : {}),
+      };
+      const savedPresets = Array.isArray(rawTheme.savedPresets)
+        ? rawTheme.savedPresets
+            .filter((p) => p && typeof p.name === "string" && p.colors && typeof p.colors === "object")
+            .map((p) => ({
+              id: typeof p.id === "string" && p.id ? p.id : crypto.randomUUID(),
+              name: p.name.slice(0, 28),
+              colors: { ...PRESET_THEMES.light, ...p.colors },
+            }))
+        : [];
+      return { mode, customColors, savedPresets };
+    }
+
+    function saveThemeState() {
+      try {
+        localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(state.theme));
+      } catch (e) {
+        console.error("Errore salvataggio tema:", e);
+      }
+    }
+
+    function loadThemeState() {
+      try {
+        const raw = localStorage.getItem(THEME_STORAGE_KEY);
+        if (raw) {
+          state.theme = normalizeThemeObject(JSON.parse(raw));
+        }
+      } catch (e) {
+        state.theme = normalizeThemeObject(null);
+      }
+      applyCurrentTheme();
+    }
+
+    function buildColorGrid() {
+      const grid = document.getElementById("color-grid");
+      grid.innerHTML = "";
+      THEME_FIELDS.forEach(({ key, label }) => {
+        const field = document.createElement("div");
+        field.className = "color-field";
+
+        const lbl = document.createElement("label");
+        lbl.textContent = label;
+        lbl.htmlFor = `picker-${key}`;
+
+        const wrap = document.createElement("div");
+        wrap.className = "color-input-wrap";
+
+        const hexSpan = document.createElement("span");
+        hexSpan.className = "color-hex";
+        hexSpan.id = `hex-${key}`;
+        hexSpan.textContent = state.theme.customColors[key] || "#000000";
+
+        const input = document.createElement("input");
+        input.type = "color";
+        input.className = "color-picker";
+        input.id = `picker-${key}`;
+        input.value = state.theme.customColors[key] || "#000000";
+
+        input.oninput = (e) => {
+          const val = e.target.value;
+          state.theme.mode = "custom";
+          state.theme.customColors[key] = val;
+          hexSpan.textContent = val;
+          applyCurrentTheme();
+          saveThemeState();
+        };
+
+        wrap.append(hexSpan, input);
+        field.append(lbl, wrap);
+        grid.appendChild(field);
+      });
+    }
+
+    function syncColorGridValues() {
+      THEME_FIELDS.forEach(({ key }) => {
+        const val = state.theme.customColors[key] || PRESET_THEMES.light[key];
+        const picker = document.getElementById(`picker-${key}`);
+        const hexSpan = document.getElementById(`hex-${key}`);
+        if (picker) picker.value = val;
+        if (hexSpan) hexSpan.textContent = val;
+      });
+    }
+
+    function renderSavedPresets() {
+      const container = document.getElementById("saved-presets-row");
+      container.innerHTML = "";
+      if (!state.theme.savedPresets.length) return;
+
+      state.theme.savedPresets.forEach((preset) => {
+        const pill = document.createElement("div");
+        pill.className = "preset-pill";
+        pill.title = `Applica tema "${preset.name}"`;
+
+        const swatch = document.createElement("span");
+        swatch.className = "preset-swatch";
+        swatch.style.background = `linear-gradient(135deg, ${preset.colors["--bg"] || "#fff"} 50%, ${preset.colors["--accent"] || "#0969da"} 50%)`;
+
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = preset.name;
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "preset-del";
+        delBtn.textContent = "✕";
+        delBtn.title = "Elimina tema salvato";
+        delBtn.onclick = (e) => {
+          e.stopPropagation();
+          state.theme.savedPresets = state.theme.savedPresets.filter((p) => p.id !== preset.id);
+          saveThemeState();
+          renderSavedPresets();
+        };
+
+        pill.onclick = () => {
+          state.theme.mode = "custom";
+          state.theme.customColors = { ...PRESET_THEMES.light, ...preset.colors };
+          applyCurrentTheme();
+          saveThemeState();
+          updateThemeDrawerUI();
+          showToast(`Tema "${preset.name}" applicato`);
+        };
+
+        pill.append(swatch, nameSpan, delBtn);
+        container.appendChild(pill);
+      });
+    }
+
+    function updateThemeDrawerUI() {
+      const themeBtn = document.getElementById("btn-theme");
+      themeBtn.classList.toggle("active", state.themeDrawerOpen);
+
+      const drawer = document.getElementById("theme-drawer");
+      drawer.classList.toggle("open", state.themeDrawerOpen);
+
+      document.querySelectorAll("[data-theme-mode]").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.themeMode === state.theme.mode);
+      });
+
+      const editor = document.getElementById("custom-theme-editor");
+      const isCustom = state.theme.mode === "custom";
+      editor.classList.toggle("open", isCustom);
+      if (isCustom) {
+        syncColorGridValues();
+        renderSavedPresets();
+      }
+    }
+
+    // --- Normalizzazione Sicura & Conteggio ---
+    function normalizeNodes(nodes, isRootLevel = true) {
+      if (!Array.isArray(nodes)) return [];
+      return nodes.map((n) => {
+        let parsedUnsuspend = null;
+        if (typeof n.unsuspendAt === "number" && Number.isFinite(n.unsuspendAt)) {
+          parsedUnsuspend = n.unsuspendAt;
+        } else if (typeof n.unsuspendAt === "string" && n.unsuspendAt.trim() !== "") {
+          const fromIso = parseDateInputToTimestamp(n.unsuspendAt.trim());
+          parsedUnsuspend = fromIso ?? (Number.isNaN(Date.parse(n.unsuspendAt)) ? null : Date.parse(n.unsuspendAt));
+        }
+
+        const isSuspended = Boolean(n.suspended);
+
+        return {
+          id: typeof n.id === "string" && n.id ? n.id : crypto.randomUUID(),
+          text: typeof n.text === "string" ? n.text : "",
+          note: typeof n.note === "string" ? n.note : "",
+          done: Boolean(n.done),
+          completedAt: typeof n.completedAt === "number" ? n.completedAt : null,
+          suspended: isSuspended,
+          unsuspendAt: isSuspended ? parsedUnsuspend : null,
+          priority: isRootLevel
+            ? 0
+            : [0, 1, 2, 3].includes(Number(n.priority))
+            ? Number(n.priority)
+            : 0,
+          collapsed: Boolean(n.collapsed),
+          children: normalizeNodes(n.children, false),
+        };
+      });
+    }
+
+    function normalizeArchive(items) {
+      if (!Array.isArray(items)) return [];
+      return items.map((item) => ({
+        id: typeof item.id === "string" && item.id ? item.id : crypto.randomUUID(),
+        text: typeof item.text === "string" ? item.text : "",
+        note: typeof item.note === "string" ? item.note : "",
+        priority: [0, 1, 2, 3].includes(Number(item.priority)) ? Number(item.priority) : 0,
+        rootCategory: typeof item.rootCategory === "string" ? item.rootCategory : "Livello principale",
+        categoryPath: typeof item.categoryPath === "string" ? item.categoryPath : "Livello principale",
+        completedAt: typeof item.completedAt === "number" ? item.completedAt : Date.now(),
+        archivedAt: typeof item.archivedAt === "number" ? item.archivedAt : Date.now(),
+      }));
+    }
+
+    function normalizeSnapshotsList(rawSnaps) {
+      if (!Array.isArray(rawSnaps)) return [];
+      return rawSnaps
+        .filter((s) => s && s.data && Array.isArray(s.data.tasks))
+        .slice(0, MAX_SNAPSHOTS)
+        .map((s) => {
+          const normTasks = normalizeNodes(s.data.tasks, true);
+          const normArchive = normalizeArchive(s.data.archive || []);
+          return {
+            id: typeof s.id === "string" && s.id ? s.id : crypto.randomUUID(),
+            createdAt: typeof s.createdAt === "number" ? s.createdAt : Date.now(),
+            reason: typeof s.reason === "string" ? s.reason : "Istantanea importata",
+            taskCount: countTotalNodes(normTasks),
+            archiveCount: normArchive.length,
+            data: {
+              tasks: normTasks,
+              archive: normArchive,
+            },
+          };
+        });
+    }
+
+    function countTotalNodes(nodes) {
+      let count = 0;
+      for (const n of nodes) {
+        count += 1 + countTotalNodes(n.children || []);
+      }
+      return count;
+    }
+
+    // --- Snapshot Locali (ultimi 5 in localStorage) ---
+    function loadSnapshots() {
+      try {
+        const raw = localStorage.getItem(SNAPSHOTS_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        state.snapshots = normalizeSnapshotsList(parsed);
+      } catch (e) {
+        state.snapshots = [];
+      }
+    }
+
+    function saveSnapshots() {
+      try {
+        localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(state.snapshots));
+      } catch (e) {
+        console.error("Errore salvataggio snapshot:", e);
+      }
+    }
+
+    function createSnapshot(reason = "Istantanea manuale", silent = false) {
+      const taskCount = countTotalNodes(state.tasks);
+      const archiveCount = state.archive.length;
+      const snap = {
+        id: crypto.randomUUID(),
+        createdAt: Date.now(),
+        reason,
+        taskCount,
+        archiveCount,
+        data: {
+          tasks: JSON.parse(JSON.stringify(state.tasks)),
+          archive: JSON.parse(JSON.stringify(state.archive)),
+        },
+      };
+      state.snapshots.unshift(snap);
+      if (state.snapshots.length > MAX_SNAPSHOTS) {
+        state.snapshots = state.snapshots.slice(0, MAX_SNAPSHOTS);
+      }
+      saveSnapshots();
+      updateBackupDrawerUI();
+      if (!silent) {
+        showToast(`Istantanea salvata (${taskCount} voci)`);
+      }
+    }
+
+    function restoreSnapshot(snapId) {
+      const snap = state.snapshots.find((s) => s.id === snapId);
+      if (!snap || !snap.data) return;
+      createSnapshot("Prima del ripristino istantanea", true);
+      state.tasks = normalizeNodes(snap.data.tasks || [], true);
+      state.archive = normalizeArchive(snap.data.archive || []);
+      state.openNoteIds.clear();
+      state.openSuspendIds.clear();
+      processSuspendedNodes(state.tasks);
+      saveState();
+      render();
+      showToast(`Istantanea ripristinata: ${countTotalNodes(state.tasks)} voci`);
+    }
+
+    function deleteSnapshot(snapId) {
+      state.snapshots = state.snapshots.filter((s) => s.id !== snapId);
+      saveSnapshots();
+      updateBackupDrawerUI();
+    }
+
+    // --- Auto-backup su file (File System Access API) ---
+    async function writeAutoBackupFile() {
+      if (!autoBackupFileHandle) return;
+      try {
+        const writable = await autoBackupFileHandle.createWritable();
+        const payload = JSON.stringify({ tasks: state.tasks, archive: state.archive }, null, 2);
+        await writable.write(payload);
+        await writable.close();
+        lastAutoBackupTime = Date.now();
+        updateBackupDrawerUI();
+      } catch (err) {
+        console.warn("Auto-backup su file interrotto:", err);
+        autoBackupFileHandle = null;
+        lastAutoBackupTime = null;
+        updateBackupDrawerUI();
+        showToast("Connessione al file di auto-backup interrotta", true);
+      }
+    }
+
+    function scheduleAutoBackup() {
+      if (!autoBackupFileHandle) return;
+      clearTimeout(autoBackupTimer);
+      autoBackupTimer = setTimeout(() => {
+        writeAutoBackupFile();
+      }, 900);
+    }
+
+    async function linkAutoBackupFile() {
+      if (!("showSaveFilePicker" in window)) {
+        showToast("File System Access API non supportata da questo browser", true);
+        return;
+      }
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: `sticky-todo-autobackup.json`,
+          types: [
+            {
+              description: "File di backup JSON",
+              accept: { "application/json": [".json"] },
+            },
+          ],
+        });
+        autoBackupFileHandle = handle;
+        await writeAutoBackupFile();
+        showToast(`Auto-backup collegato: ${handle.name}`);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          showToast("Impossibile collegare il file di backup", true);
+        }
+      }
+    }
+
+    function unlinkAutoBackupFile() {
+      autoBackupFileHandle = null;
+      lastAutoBackupTime = null;
+      clearTimeout(autoBackupTimer);
+      updateBackupDrawerUI();
+      showToast("Auto-backup su file scollegato");
+    }
+
+    // --- Persistenza immediata in localStorage ---
+    function saveState() {
+      try {
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({ tasks: state.tasks, archive: state.archive })
+        );
+        scheduleAutoBackup();
+      } catch (e) {
+        console.error("Errore salvataggio localStorage:", e);
+      }
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          state.tasks = normalizeNodes(parsed.tasks || [], true);
+          state.archive = normalizeArchive(parsed.archive || []);
+        } else {
+          state.tasks = normalizeNodes(DEFAULT_TASKS, true);
+          state.archive = [];
+          saveState();
+        }
+      } catch (e) {
+        state.tasks = normalizeNodes(DEFAULT_TASKS, true);
+        state.archive = [];
+      }
+    }
+
+    window.addEventListener("beforeunload", () => {
+      saveState();
+      if (autoBackupFileHandle) {
+        writeAutoBackupFile();
+      }
+    });
+
+    // --- Logica Ricerca & Filtri ---
+    function isFilterActive() {
+      return (
+        state.searchQuery.trim() !== "" ||
+        state.filterStatus !== "all" ||
+        state.filterPriority !== null
+      );
+    }
+
+    function nodeMatchesFilter(node) {
+      const q = state.searchQuery.trim().toLowerCase();
+      if (q) {
+        const inText = (node.text || "").toLowerCase().includes(q);
+        const inNote = (node.note || "").toLowerCase().includes(q);
+        if (!inText && !inNote) return false;
+      }
+
+      if (state.filterStatus === "active_all" && node.suspended) return false;
+      if (state.filterStatus === "todo" && node.done) return false;
+      if (state.filterStatus === "suspended" && !node.suspended) return false;
+      if (state.filterStatus === "notes" && !(node.note && node.note.trim() !== "")) return false;
+
+      if (state.filterPriority !== null && (node.priority || 0) !== state.filterPriority) {
+        return false;
+      }
+
+      return true;
+    }
+
+    function filterTreeForDisplay(nodes) {
+      const result = [];
+      for (const node of nodes) {
+        const selfMatches = nodeMatchesFilter(node);
+        const filteredChildren = node.children?.length
+          ? filterTreeForDisplay(node.children)
+          : [];
+
+        if (selfMatches || filteredChildren.length > 0) {
+          result.push({
+            node,
+            selfMatches,
+            children: filteredChildren,
+          });
+        }
+      }
+      return result;
+    }
+
+    // --- Logica Archivio (3 giorni o manuale) ---
+    function archiveCompletedTasks({ manual = false } = {}) {
+      const now = Date.now();
+      let movedCount = 0;
+
+      function sweep(list, ancestors = []) {
+        const remaining = [];
+        for (const node of list) {
+          const isExpired =
+            node.done &&
+            (manual || (node.completedAt && now - node.completedAt >= THREE_DAYS_MS));
+
+          if (isExpired) {
+            const rootCategory = ancestors[0]?.text || "Livello principale";
+            const fullPath =
+              ancestors.map((a) => a.text || "(Senza nome)").join(" · ") ||
+              "Livello principale";
+
+            const pendingChildren = [];
+            function collectChildren(children, subAncestors) {
+              for (const child of children) {
+                if (child.done || manual) {
+                  const childFullPath = subAncestors
+                    .map((a) => a.text || "(Senza nome)")
+                    .join(" · ");
+                  state.archive.unshift({
+                    id: child.id,
+                    text: child.text,
+                    note: child.note || "",
+                    priority: child.priority || 0,
+                    rootCategory: subAncestors[0]?.text || rootCategory,
+                    categoryPath: childFullPath || fullPath,
+                    completedAt: child.completedAt || now,
+                    archivedAt: now,
+                  });
+                  movedCount++;
+                  if (child.children?.length) {
+                    collectChildren(child.children, [...subAncestors, child]);
+                  }
+                } else {
+                  pendingChildren.push(child);
+                }
+              }
+            }
+
+            if (node.children?.length) {
+              collectChildren(node.children, [...ancestors, node]);
+            }
+
+            state.archive.unshift({
+              id: node.id,
+              text: node.text,
+              note: node.note || "",
+              priority: node.priority || 0,
+              rootCategory,
+              categoryPath: fullPath,
+              completedAt: node.completedAt || now,
+              archivedAt: now,
+            });
+            movedCount++;
+            remaining.push(...pendingChildren);
+          } else {
+            if (node.children?.length) {
+              node.children = sweep(node.children, [...ancestors, node]);
+            }
+            remaining.push(node);
+          }
+        }
+        return remaining;
+      }
+
+      state.tasks = sweep(state.tasks, []);
+      if (movedCount > 0) saveState();
+      return movedCount;
+    }
+
+    function hasAnyCompletedTask(nodes = state.tasks) {
+      for (const n of nodes) {
+        if (n.done) return true;
+        if (n.children?.length && hasAnyCompletedTask(n.children)) return true;
+      }
+      return false;
+    }
+
+    function restoreArchivedItem(archiveId) {
+      const idx = state.archive.findIndex((item) => item.id === archiveId);
+      if (idx === -1) return;
+      const [item] = state.archive.splice(idx, 1);
+
+      const hasRootCategory = Boolean(
+        item.rootCategory && item.rootCategory !== "Livello principale"
+      );
+
+      const restoredNode = {
+        id: item.id,
+        text: item.text,
+        note: item.note || "",
+        done: false,
+        completedAt: null,
+        suspended: false,
+        unsuspendAt: null,
+        priority: hasRootCategory ? item.priority || 0 : 0,
+        collapsed: false,
+        children: [],
+      };
+
+      if (hasRootCategory) {
+        let rootCat = state.tasks.find(
+          (t) => t.text.trim().toLowerCase() === item.rootCategory.trim().toLowerCase()
+        );
+        if (!rootCat) {
+          rootCat = {
+            id: crypto.randomUUID(),
+            text: item.rootCategory,
+            note: "",
+            done: false,
+            completedAt: null,
+            suspended: false,
+            unsuspendAt: null,
+            priority: 0,
+            collapsed: false,
+            children: [],
+          };
+          state.tasks.push(rootCat);
+        }
+        rootCat.collapsed = false;
+        rootCat.children.push(restoredNode);
+      } else {
+        state.tasks.push(restoredNode);
+      }
+
+      saveState();
+      render();
+    }
+
+    // --- Ricerca & Manipolazione Albero ---
+    function findNodeContext(id, list = state.tasks, parent = null, depth = 0) {
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].id === id) {
+          return { node: list[i], list, index: i, parent, depth };
+        }
+        if (list[i].children?.length) {
+          const found = findNodeContext(id, list[i].children, list[i], depth + 1);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+
+    function isDescendant(parentNode, targetId) {
+      if (!parentNode?.children?.length) return false;
+      for (const child of parentNode.children) {
+        if (child.id === targetId || isDescendant(child, targetId)) return true;
+      }
+      return false;
+    }
+
+    function getDropPosition(e, rowEl) {
+      const rect = rowEl.getBoundingClientRect();
+      const ratio = (e.clientY - rect.top) / rect.height;
+      if (ratio < 0.25) return "top";
+      if (ratio > 0.75) return "bottom";
+      return "inside";
+    }
+
+    function clearDragClasses() {
+      document.body.classList.remove("is-dragging");
+      document
+        .querySelectorAll(".drag-over-top, .drag-over-bottom, .drag-over-inside, .dragging, .drag-over")
+        .forEach((el) =>
+          el.classList.remove("drag-over-top", "drag-over-bottom", "drag-over-inside", "dragging", "drag-over")
+        );
+    }
+
+    function moveNodeToRoot(sourceId, position = "end") {
+      if (!sourceId) return;
+      const sourceCtx = findNodeContext(sourceId);
+      if (!sourceCtx || !sourceCtx.parent) return;
+
+      const [movedNode] = sourceCtx.list.splice(sourceCtx.index, 1);
+      movedNode.priority = 0;
+      if (position === "start") state.tasks.unshift(movedNode);
+      else state.tasks.push(movedNode);
+      saveState();
+      render();
+    }
+
+    function outdentNode(id) {
+      const ctx = findNodeContext(id);
+      if (!ctx || !ctx.parent) return;
+      const parentCtx = findNodeContext(ctx.parent.id);
+      if (!parentCtx) return;
+
+      ctx.list.splice(ctx.index, 1);
+      if (parentCtx.depth === 0) {
+        ctx.node.priority = 0;
+      }
+      parentCtx.list.splice(parentCtx.index + 1, 0, ctx.node);
+      saveState();
+      render();
+      focusNode(ctx.node.id);
+    }
+
+    function moveNode(sourceId, targetId, position) {
+      if (!sourceId || !targetId || sourceId === targetId) return;
+      const sourceCtx = findNodeContext(sourceId);
+      const targetCtx = findNodeContext(targetId);
+      if (!sourceCtx || !targetCtx) return;
+      if (isDescendant(sourceCtx.node, targetId)) return;
+
+      const [movedNode] = sourceCtx.list.splice(sourceCtx.index, 1);
+      const updatedTargetCtx = findNodeContext(targetId);
+      if (!updatedTargetCtx) return;
+
+      if (position === "inside") {
+        updatedTargetCtx.node.collapsed = false;
+        updatedTargetCtx.node.children.push(movedNode);
+      } else {
+        const insertIndex = position === "top" ? updatedTargetCtx.index : updatedTargetCtx.index + 1;
+        if (updatedTargetCtx.depth === 0) {
+          movedNode.priority = 0;
+        }
+        updatedTargetCtx.list.splice(insertIndex, 0, movedNode);
+      }
+
+      saveState();
+      render();
+    }
+
+    function flattenTasks(nodes = state.tasks, ancestors = [], acc = []) {
+      for (const node of nodes) {
+        const depth = ancestors.length;
+        const categoryPath = ancestors.map((a) => a.text || "(Senza nome)").join(" · ");
+        acc.push({ node, categoryPath, depth });
+        if (node.children?.length) {
+          flattenTasks(node.children, [...ancestors, node], acc);
+        }
+      }
+      return acc;
+    }
+
+    function focusNode(id, atEnd = true) {
+      requestAnimationFrame(() => {
+        const el = document.querySelector(`[data-id="${id}"] .node-text`);
+        if (!el) return;
+        el.focus();
+        if (atEnd && el.childNodes.length > 0) {
+          const range = document.createRange();
+          const sel = window.getSelection();
+          range.selectNodeContents(el);
+          range.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      });
+    }
+
+    function focusNote(id) {
+      requestAnimationFrame(() => {
+        const el = document.querySelector(`[data-id="${id}"] .node-note-box`);
+        if (!el) return;
+        el.focus();
+        if (el.childNodes.length > 0) {
+          const range = document.createRange();
+          const sel = window.getSelection();
+          range.selectNodeContents(el);
+          range.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      });
+    }
+
+    function formatDate(ts) {
+      if (!ts) return "";
+      return new Date(ts).toLocaleDateString("it-IT", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+
+    function formatTime(ts) {
+      if (!ts) return "";
+      return new Date(ts).toLocaleTimeString("it-IT", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+    }
+
+    function updateBackupDrawerUI() {
+      const snapBtn = document.getElementById("btn-snapshots");
+      snapBtn.textContent = `🕒 (${state.snapshots.length})`;
+      snapBtn.classList.toggle("active", state.backupDrawerOpen);
+      snapBtn.classList.toggle("auto-linked", Boolean(autoBackupFileHandle) && !state.backupDrawerOpen);
+
+      const drawer = document.getElementById("backup-drawer");
+      drawer.classList.toggle("open", state.backupDrawerOpen);
+
+      const fullInfoEl = document.getElementById("full-export-info");
+      if (fullInfoEl) {
+        const presetCount = state.theme.savedPresets.length;
+        fullInfoEl.textContent = `${countTotalNodes(state.tasks)} task, ${state.archive.length} archivio, ${state.snapshots.length} snapshot, ${presetCount} temi`;
+      }
+
+      const autoSection = document.getElementById("autobackup-section");
+      if (!("showSaveFilePicker" in window)) {
+        autoSection.style.display = "none";
+      } else {
+        autoSection.style.display = "flex";
+        const statusEl = document.getElementById("autobackup-status");
+        const linkBtn = document.getElementById("btn-link-file");
+        const unlinkBtn = document.getElementById("btn-unlink-file");
+
+        if (autoBackupFileHandle) {
+          const timeStr = lastAutoBackupTime ? ` · salvato alle ${formatTime(lastAutoBackupTime)}` : "";
+          statusEl.innerHTML = `<strong>● ${autoBackupFileHandle.name}</strong>${timeStr}`;
+          linkBtn.textContent = "Cambia file";
+          unlinkBtn.style.display = "inline-block";
+        } else {
+          statusEl.textContent = "Nessun file collegato (salva su disco ad ogni modifica)";
+          linkBtn.textContent = "Collega file";
+          unlinkBtn.style.display = "none";
+        }
+      }
+
+      const listEl = document.getElementById("snapshot-list");
+      listEl.innerHTML = "";
+      if (!state.snapshots.length) {
+        const empty = document.createElement("div");
+        empty.className = "snapshot-empty";
+        empty.textContent = "Nessuna istantanea salvata. Vengono create automaticamente prima di importazioni o svuotamenti.";
+        listEl.appendChild(empty);
+        return;
+      }
+
+      state.snapshots.forEach((snap) => {
+        const item = document.createElement("div");
+        item.className = "snapshot-item";
+
+        const meta = document.createElement("div");
+        meta.className = "snapshot-meta";
+
+        const reason = document.createElement("div");
+        reason.className = "snapshot-reason";
+        reason.textContent = snap.reason;
+        reason.title = snap.reason;
+
+        const sub = document.createElement("div");
+        sub.className = "snapshot-sub";
+        sub.textContent = `${formatDate(snap.createdAt)} · ${snap.taskCount} voci, ${snap.archiveCount} archiviate`;
+
+        meta.append(reason, sub);
+
+        const actions = document.createElement("div");
+        actions.className = "snapshot-actions";
+
+        const restoreBtn = document.createElement("button");
+        restoreBtn.textContent = "↩ Ripristina";
+        restoreBtn.title = "Ripristina questa istantanea";
+        restoreBtn.onclick = () => restoreSnapshot(snap.id);
+
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "✕";
+        delBtn.title = "Elimina istantanea";
+        delBtn.onclick = () => deleteSnapshot(snap.id);
+
+        actions.append(restoreBtn, delBtn);
+        item.append(meta, actions);
+        listEl.appendChild(item);
+      });
+    }
+
+    function updateToolbarState() {
+      const isArchive = state.view === "archive";
+      document.getElementById("btn-add-root").style.display = isArchive ? "none" : "";
+      document.getElementById("btn-sort-priority").style.display = isArchive ? "none" : "";
+      document.getElementById("filter-bar").style.display = isArchive ? "none" : "flex";
+      document.getElementById("hint-bar").style.display = isArchive ? "none" : "flex";
+
+      const archiveNowBtn = document.getElementById("btn-archive-now");
+      archiveNowBtn.style.display = isArchive ? "none" : "";
+      archiveNowBtn.disabled = !hasAnyCompletedTask();
+
+      const viewArchiveBtn = document.getElementById("btn-view-archive");
+      viewArchiveBtn.textContent = isArchive
+        ? "← Task"
+        : `📦 (${state.archive.length})`;
+      viewArchiveBtn.classList.toggle("active", isArchive);
+
+      updateThemeDrawerUI();
+      updateBackupDrawerUI();
+
+      // Aggiorna stato UI filtri
+      const searchInput = document.getElementById("task-search");
+      if (searchInput.value !== state.searchQuery) {
+        searchInput.value = state.searchQuery;
+      }
+      document
+        .getElementById("btn-clear-search")
+        .classList.toggle("visible", state.searchQuery.length > 0);
+
+      document.querySelectorAll("[data-filter-status]").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.filterStatus === state.filterStatus);
+      });
+
+      document.querySelectorAll("[data-filter-prio]").forEach((btn) => {
+        btn.classList.toggle("active", Number(btn.dataset.filterPrio) === state.filterPriority);
+      });
+
+      document.getElementById("btn-reset-filters").style.display = isFilterActive()
+        ? "inline-block"
+        : "none";
+    }
+
+    function getNoteButtonTitle(node, isOpen) {
+      const text = (node.note || "").trim();
+      if (isOpen) return "Chiudi nota (Esc)";
+      if (text) return `Mostra nota: ${text.length > 80 ? text.slice(0, 80) + "…" : text}`;
+      return "Aggiungi nota (Alt+N)";
+    }
+
+    function getSuspendButtonTitle(node, isOpen) {
+      if (isOpen) return "Chiudi impostazioni sospensione";
+      if (node.suspended) {
+        return node.unsuspendAt
+          ? `Sospesa fino al ${formatShortDay(node.unsuspendAt)} — clicca per gestire`
+          : "Sospesa — clicca per gestire";
+      }
+      return "Metti in sospeso";
+    }
+
+    // --- Costruzione componente Sospensione per riga ---
+    function createSuspendBar(node) {
+      const bar = document.createElement("div");
+      bar.className = "suspend-bar";
+
+      const label = document.createElement("span");
+      label.textContent = "De-sospensione:";
+
+      const dateInput = document.createElement("input");
+      dateInput.type = "date";
+      dateInput.className = "suspend-date-input";
+      dateInput.value = formatDateInputValue(node.unsuspendAt);
+      dateInput.title = "Data opzionale di riattivazione automatica";
+      dateInput.onchange = (e) => {
+        const ts = parseDateInputToTimestamp(e.target.value);
+        node.unsuspendAt = ts;
+        saveState();
+        render();
+        if (ts) {
+          showToast(`De-sospensione impostata al ${formatShortDay(ts)}`);
+        }
+      };
+
+      const clearDateBtn = document.createElement("button");
+      clearDateBtn.textContent = "Senza data";
+      clearDateBtn.title = "Lascia sospesa senza data automatica";
+      clearDateBtn.disabled = !node.unsuspendAt;
+      clearDateBtn.onclick = () => {
+        node.unsuspendAt = null;
+        saveState();
+        render();
+      };
+
+      const resumeBtn = document.createElement("button");
+      resumeBtn.textContent = "▶ Riattiva";
+      resumeBtn.title = "Riattiva subito la voce";
+      resumeBtn.onclick = () => {
+        node.suspended = false;
+        node.unsuspendAt = null;
+        state.openSuspendIds.delete(node.id);
+        saveState();
+        render();
+        showToast("Voce riattivata");
+      };
+
+      const closeBtn = document.createElement("button");
+      closeBtn.textContent = "✕";
+      closeBtn.title = "Chiudi pannello sospensione";
+      closeBtn.onclick = () => {
+        state.openSuspendIds.delete(node.id);
+        render();
+      };
+
+      bar.append(label, dateInput, clearDateBtn, resumeBtn, closeBtn);
+      return bar;
+    }
+
+    function appendSuspendControls(actionsEl, node, isSuspendOpen) {
+      if (node.suspended) {
+        const pill = document.createElement("span");
+        pill.className = "suspended-pill";
+        pill.textContent = node.unsuspendAt
+          ? `⏸ fino al ${formatShortDay(node.unsuspendAt)}`
+          : "⏸ sospeso";
+        pill.title = "Clicca per modificare data o riattivare";
+        pill.onclick = (e) => {
+          e.stopPropagation();
+          if (state.openSuspendIds.has(node.id)) {
+            state.openSuspendIds.delete(node.id);
+          } else {
+            state.openSuspendIds.clear();
+            state.openSuspendIds.add(node.id);
+          }
+          render();
+        };
+        actionsEl.appendChild(pill);
+        return;
+      }
+
+      const suspBtn = document.createElement("button");
+      suspBtn.className = `suspend-btn ${isSuspendOpen ? "is-open" : ""}`;
+      suspBtn.textContent = "⏸";
+      suspBtn.title = getSuspendButtonTitle(node, isSuspendOpen);
+      suspBtn.onclick = (e) => {
+        e.stopPropagation();
+        toggleSuspendNode(node.id);
+      };
+      actionsEl.appendChild(suspBtn);
+    }
+
+    // --- Estrazione sicura del testo multilinea da contentEditable ---
+    function extractNoteText(el) {
+      const blockTags = new Set(["DIV", "P", "LI", "BLOCKQUOTE", "H1", "H2", "H3", "H4", "H5", "H6"]);
+      let out = "";
+
+      function walk(node, isFirstChild = true) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          out += node.nodeValue.replace(/\r\n?/g, "\n");
+          return;
+        }
+        if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+        const tag = node.tagName;
+        if (tag === "BR") {
+          out += "\n";
+          return;
+        }
+
+        const isBlock = blockTags.has(tag);
+        if (isBlock && !isFirstChild && !out.endsWith("\n")) {
+          out += "\n";
+        }
+
+        const children = Array.from(node.childNodes);
+        children.forEach((child, idx) => {
+          walk(child, idx === 0);
+        });
+      }
+
+      const topChildren = Array.from(el.childNodes);
+      topChildren.forEach((child, idx) => {
+        walk(child, idx === 0);
+      });
+
+      return out;
+    }
+
+    function insertPlainTextAtCursor(text) {
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) return;
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      const textNode = document.createTextNode(text);
+      range.insertNode(textNode);
+      range.setStartAfter(textNode);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+
+    // --- Costruzione componente Nota per riga ---
+    function createNoteBox(node) {
+      const noteEl = document.createElement("div");
+      noteEl.className = "node-note-box";
+      noteEl.contentEditable = "true";
+      noteEl.spellcheck = false;
+      noteEl.dataset.placeholder = "Scrivi una nota... (Esc per chiudere)";
+      noteEl.textContent = node.note || "";
+
+      const syncNoteFromDom = () => {
+        node.note = extractNoteText(noteEl);
+        const row = noteEl.closest(".node-row");
+        const btn = row?.querySelector(".note-btn");
+        if (btn) {
+          btn.classList.toggle("has-note", node.note.trim() !== "");
+        }
+        saveState();
+      };
+
+      noteEl.oninput = syncNoteFromDom;
+
+      noteEl.onpaste = (e) => {
+        e.preventDefault();
+        const plain = (e.clipboardData || window.clipboardData)
+          ?.getData("text/plain")
+          ?.replace(/\r\n?/g, "\n") || "";
+        insertPlainTextAtCursor(plain);
+        syncNoteFromDom();
+      };
+
+      noteEl.onblur = () => {
+        syncNoteFromDom();
+        if (!node.note || node.note.trim() === "") {
+          node.note = "";
+          state.openNoteIds.delete(node.id);
+          saveState();
+          render();
+        }
+      };
+
+      noteEl.onkeydown = (e) => {
+        if (e.key === "Escape" || (e.key === "Enter" && (e.ctrlKey || e.metaKey))) {
+          e.preventDefault();
+          syncNoteFromDom();
+          if (!node.note || node.note.trim() === "") {
+            node.note = "";
+            saveState();
+          }
+          state.openNoteIds.delete(node.id);
+          render();
+          focusNode(node.id);
+          return;
+        }
+
+        if (e.key === "Enter") {
+          e.preventDefault();
+          insertPlainTextAtCursor("\n");
+          syncNoteFromDom();
+        }
+      };
+
+      return noteEl;
+    }
+
+    // --- Rendering ---
+    function render() {
+      if (processSuspendedNodes(state.tasks)) {
+        saveState();
+      }
+      updateToolbarState();
+      const container = document.getElementById("tree-container");
+      container.innerHTML = "";
+
+      if (state.view === "archive") {
+        renderArchiveView(container);
+      } else if (state.sortByPriority) {
+        renderPrioritySections(container);
+      } else {
+        const filtering = isFilterActive();
+        if (filtering) {
+          const filteredTree = filterTreeForDisplay(state.tasks);
+          if (!filteredTree.length) {
+            const empty = document.createElement("div");
+            empty.className = "archive-empty";
+            empty.textContent = "Nessuna voce corrisponde ai filtri selezionati.";
+            container.appendChild(empty);
+            return;
+          }
+          renderFilteredTreeNodes(filteredTree, container, 0);
+        } else {
+          container.appendChild(createRootDropzone("↑ Rilascia qui per livello principale (inizio)", "start"));
+          renderTreeNodes(state.tasks, container, 0);
+          container.appendChild(createRootDropzone("↓ Rilascia qui per livello principale (fine)", "end"));
+        }
+      }
+    }
+
+    function renderArchiveView(container) {
+      const header = document.createElement("div");
+      header.className = "archive-header";
+
+      const search = document.createElement("input");
+      search.type = "text";
+      search.className = "archive-search";
+      search.placeholder = "Filtra archivio per testo, nota o categoria...";
+      search.value = state.archiveFilter;
+      search.oninput = (e) => {
+        state.archiveFilter = e.target.value;
+        renderArchiveList(listContainer);
+      };
+
+      const clearBtn = document.createElement("button");
+      clearBtn.textContent = "Svuota";
+      clearBtn.title = "Elimina definitivamente tutto l'archivio";
+      clearBtn.onclick = () => {
+        if (!state.archive.length) return;
+        const count = state.archive.length;
+        createSnapshot(`Prima di svuotare archivio (${count} voci)`, true);
+        state.archive = [];
+        saveState();
+        render();
+        showToast(`Archivio svuotato (istantanea creata)`);
+      };
+
+      header.append(search, clearBtn);
+      container.appendChild(header);
+
+      const listContainer = document.createElement("div");
+      container.appendChild(listContainer);
+      renderArchiveList(listContainer);
+    }
+
+    function renderArchiveList(container) {
+      container.innerHTML = "";
+      const q = state.archiveFilter.trim().toLowerCase();
+      const filtered = state.archive.filter(
+        (item) =>
+          !q ||
+          item.text.toLowerCase().includes(q) ||
+          (item.note || "").toLowerCase().includes(q) ||
+          (item.categoryPath || "").toLowerCase().includes(q)
+      );
+
+      if (!filtered.length) {
+        const empty = document.createElement("div");
+        empty.className = "archive-empty";
+        empty.textContent = state.archive.length
+          ? "Nessun risultato trovato."
+          : "L'archivio è vuoto.\nLe voci spuntate passano qui dopo 3 giorni oppure subito premendo «📥 Archivia».";
+        container.appendChild(empty);
+        return;
+      }
+
+      filtered.forEach((item) => {
+        const card = document.createElement("div");
+        card.className = "archive-item";
+
+        const top = document.createElement("div");
+        top.className = "archive-item-top";
+
+        const text = document.createElement("div");
+        text.className = "archive-item-text";
+        text.textContent = item.text || "(Senza titolo)";
+
+        const actions = document.createElement("div");
+        actions.className = "archive-actions";
+
+        const restoreBtn = document.createElement("button");
+        restoreBtn.textContent = "↩";
+        restoreBtn.title = "Ripristina nei task attivi";
+        restoreBtn.onclick = () => restoreArchivedItem(item.id);
+
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "🗑️";
+        delBtn.title = "Elimina definitivamente";
+        delBtn.onclick = () => {
+          state.archive = state.archive.filter((a) => a.id !== item.id);
+          saveState();
+          render();
+        };
+
+        actions.append(restoreBtn, delBtn);
+        top.append(text, actions);
+        card.appendChild(top);
+
+        if (item.note && item.note.trim() !== "") {
+          const noteEl = document.createElement("div");
+          noteEl.className = "archive-item-note";
+          noteEl.textContent = item.note;
+          card.appendChild(noteEl);
+        }
+
+        const meta = document.createElement("div");
+        meta.className = "archive-item-meta";
+
+        const badges = document.createElement("div");
+        badges.className = "archive-badges";
+
+        if (item.priority > 0) {
+          const prio = document.createElement("span");
+          prio.className = "prio-badge";
+          prio.style.opacity = "1";
+          prio.dataset.prio = item.priority;
+          prio.textContent = PRIO_LABELS[item.priority];
+          badges.appendChild(prio);
+        }
+
+        const cat = document.createElement("span");
+        cat.className = "category-tag";
+        cat.textContent = item.categoryPath || item.rootCategory || "Livello principale";
+        cat.title = `Categoria: ${cat.textContent}`;
+        badges.appendChild(cat);
+
+        const dateEl = document.createElement("span");
+        dateEl.className = "archive-date";
+        dateEl.textContent = formatDate(item.completedAt);
+
+        meta.append(badges, dateEl);
+        card.appendChild(meta);
+        container.appendChild(card);
+      });
+    }
+
+    function createRootDropzone(label, position) {
+      const zone = document.createElement("div");
+      zone.className = "root-dropzone";
+      zone.textContent = label;
+      zone.ondragover = (e) => {
+        e.preventDefault();
+        if (!draggedId) return;
+        e.dataTransfer.dropEffect = "move";
+        zone.classList.add("drag-over");
+      };
+      zone.ondragleave = () => zone.classList.remove("drag-over");
+      zone.ondrop = (e) => {
+        e.preventDefault();
+        const sourceId = draggedId || e.dataTransfer.getData("text/plain");
+        clearDragClasses();
+        draggedId = null;
+        moveNodeToRoot(sourceId, position);
+      };
+      return zone;
+    }
+
+    function renderPrioritySections(container) {
+      const filtering = isFilterActive();
+      const flat = flattenTasks()
+        .filter(({ depth }) => depth > 0)
+        .filter(({ node }) => !filtering || nodeMatchesFilter(node));
+
+      if (!flat.length) {
+        const empty = document.createElement("div");
+        empty.className = "archive-empty";
+        empty.textContent = "Nessuna voce corrisponde ai filtri selezionati.";
+        container.appendChild(empty);
+        return;
+      }
+
+      const sections = [
+        { key: "p3", label: "Priorità P1 — Alta", match: (n) => !n.done && (n.priority || 0) === 3 },
+        { key: "p2", label: "Priorità P2 — Media", match: (n) => !n.done && (n.priority || 0) === 2 },
+        { key: "p1", label: "Priorità P3 — Bassa", match: (n) => !n.done && (n.priority || 0) === 1 },
+        { key: "p0", label: "Senza priorità", match: (n) => !n.done && (n.priority || 0) === 0 },
+        { key: "done", label: "Completate (in attesa di archivio)", match: (n) => n.done },
+      ];
+
+      sections.forEach((sec) => {
+        const items = flat.filter(({ node }) => sec.match(node));
+        if (!items.length) return;
+
+        const sectionEl = document.createElement("div");
+        sectionEl.className = "prio-section";
+
+        const titleEl = document.createElement("div");
+        titleEl.className = `prio-section-title ${sec.key}`;
+        titleEl.innerHTML = `<span>${sec.label}</span><span>${items.length}</span>`;
+        sectionEl.appendChild(titleEl);
+
+        items.forEach(({ node, categoryPath }) => {
+          const row = document.createElement("div");
+          row.className = `node-row ${node.done ? "is-done" : ""} ${node.suspended ? "is-suspended" : ""}`;
+          row.dataset.id = node.id;
+
+          const cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.className = "checkbox";
+          cb.checked = node.done;
+          cb.onchange = () => {
+            node.done = cb.checked;
+            node.completedAt = cb.checked ? Date.now() : null;
+            if (cb.checked) {
+              node.suspended = false;
+              node.unsuspendAt = null;
+              state.openSuspendIds.delete(node.id);
+            }
+            saveState();
+            render();
+          };
+
+          const contentEl = document.createElement("div");
+          contentEl.className = "node-content";
+
+          const textEl = document.createElement("div");
+          textEl.className = "node-text";
+          textEl.contentEditable = "true";
+          textEl.spellcheck = false;
+          textEl.textContent = node.text;
+          textEl.oninput = () => {
+            node.text = textEl.textContent;
+            saveState();
+          };
+          textEl.onkeydown = (e) => handleKeyDown(e, node.id);
+
+          contentEl.appendChild(textEl);
+
+          const isSuspendOpen = state.openSuspendIds.has(node.id) && node.suspended;
+          if (isSuspendOpen) {
+            contentEl.appendChild(createSuspendBar(node));
+          }
+
+          const hasNote = Boolean(node.note && node.note.trim() !== "");
+          const isNoteOpen = state.openNoteIds.has(node.id);
+          if (isNoteOpen) {
+            contentEl.appendChild(createNoteBox(node));
+          }
+
+          const actionsEl = document.createElement("div");
+          actionsEl.className = "row-actions";
+
+          appendSuspendControls(actionsEl, node, isSuspendOpen);
+
+          const noteBtn = document.createElement("button");
+          noteBtn.className = `note-btn ${hasNote ? "has-note" : ""} ${isNoteOpen ? "is-open" : ""}`;
+          noteBtn.textContent = "📝";
+          noteBtn.title = getNoteButtonTitle(node, isNoteOpen);
+          noteBtn.onclick = (e) => {
+            e.stopPropagation();
+            if (isNoteOpen) {
+              sanitizeEmptyOpenNotes();
+              state.openNoteIds.delete(node.id);
+              render();
+            } else {
+              state.openNoteIds.add(node.id);
+              render();
+              focusNote(node.id);
+            }
+          };
+
+          const catTag = document.createElement("span");
+          catTag.className = "category-tag clickable";
+          catTag.textContent = categoryPath || "Livello principale";
+          catTag.title = "Clicca per tornare alla vista gerarchica";
+          catTag.onclick = () => {
+            state.sortByPriority = false;
+            const btn = document.getElementById("btn-sort-priority");
+            btn.textContent = "Priorità: Manuale";
+            btn.classList.remove("active");
+            render();
+            focusNode(node.id);
+          };
+
+          actionsEl.append(noteBtn, catTag);
+          row.append(cb, contentEl, actionsEl);
+          sectionEl.appendChild(row);
+        });
+
+        container.appendChild(sectionEl);
+      });
+    }
+
+    function buildNodeRow(node, depth, { isFiltered = false, selfMatches = true, hasFilteredChildren = false } = {}) {
+      const isRoot = depth === 0;
+      const row = document.createElement("div");
+      row.className = `node-row ${isRoot ? "is-root" : ""} ${node.done ? "is-done" : ""} ${
+        node.suspended ? "is-suspended" : ""
+      } ${isFiltered && !selfMatches ? "is-context-only" : ""}`;
+      row.dataset.id = node.id;
+
+      if (!isFiltered) {
+        row.draggable = true;
+
+        row.ondragstart = (e) => {
+          if (
+            document.activeElement === textEl ||
+            document.activeElement?.classList.contains("node-note-box") ||
+            document.activeElement?.classList.contains("suspend-date-input")
+          ) {
+            e.preventDefault();
+            return;
+          }
+          draggedId = node.id;
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", node.id);
+          requestAnimationFrame(() => {
+            document.body.classList.add("is-dragging");
+            row.classList.add("dragging");
+          });
+        };
+
+        row.ondragover = (e) => {
+          e.preventDefault();
+          if (!draggedId || draggedId === node.id) return;
+          e.dataTransfer.dropEffect = "move";
+          const pos = getDropPosition(e, row);
+          row.classList.remove("drag-over-top", "drag-over-bottom", "drag-over-inside");
+          if (pos === "top") row.classList.add("drag-over-top");
+          else if (pos === "bottom") row.classList.add("drag-over-bottom");
+          else row.classList.add("drag-over-inside");
+        };
+
+        row.ondragleave = (e) => {
+          if (!row.contains(e.relatedTarget)) {
+            row.classList.remove("drag-over-top", "drag-over-bottom", "drag-over-inside");
+          }
+        };
+
+        row.ondrop = (e) => {
+          e.preventDefault();
+          const pos = getDropPosition(e, row);
+          const sourceId = draggedId || e.dataTransfer.getData("text/plain");
+          clearDragClasses();
+          draggedId = null;
+          moveNode(sourceId, node.id, pos);
+        };
+
+        row.ondragend = () => {
+          draggedId = null;
+          clearDragClasses();
+        };
+      }
+
+      const hasKids = isFiltered ? hasFilteredChildren : node.children.length > 0;
+      const toggle = document.createElement("span");
+      toggle.className = `toggle-btn ${hasKids ? "" : "empty"}`;
+      toggle.textContent = !isFiltered && node.collapsed ? "▶" : "▼";
+      toggle.onclick = () => {
+        if (isFiltered) return;
+        node.collapsed = !node.collapsed;
+        saveState();
+        render();
+      };
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.className = "checkbox";
+      cb.checked = node.done;
+      cb.onchange = () => {
+        node.done = cb.checked;
+        node.completedAt = cb.checked ? Date.now() : null;
+        if (cb.checked) {
+          node.suspended = false;
+          node.unsuspendAt = null;
+          state.openSuspendIds.delete(node.id);
+        }
+        saveState();
+        render();
+      };
+
+      const contentEl = document.createElement("div");
+      contentEl.className = "node-content";
+
+      const textEl = document.createElement("div");
+      textEl.className = "node-text";
+      textEl.contentEditable = "true";
+      textEl.spellcheck = false;
+      textEl.textContent = node.text;
+      textEl.oninput = () => {
+        node.text = textEl.textContent;
+        saveState();
+      };
+      textEl.onkeydown = (e) => handleKeyDown(e, node.id);
+
+      contentEl.appendChild(textEl);
+
+      const isSuspendOpen = state.openSuspendIds.has(node.id) && node.suspended;
+      if (isSuspendOpen) {
+        contentEl.appendChild(createSuspendBar(node));
+      }
+
+      const hasNote = Boolean(node.note && node.note.trim() !== "");
+      const isNoteOpen = state.openNoteIds.has(node.id);
+      if (isNoteOpen) {
+        contentEl.appendChild(createNoteBox(node));
+      }
+
+      const actionsEl = document.createElement("div");
+      actionsEl.className = "row-actions";
+
+      appendSuspendControls(actionsEl, node, isSuspendOpen);
+
+      const noteBtn = document.createElement("button");
+      noteBtn.className = `note-btn ${hasNote ? "has-note" : ""} ${isNoteOpen ? "is-open" : ""}`;
+      noteBtn.textContent = "📝";
+      noteBtn.title = getNoteButtonTitle(node, isNoteOpen);
+      noteBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (isNoteOpen) {
+          sanitizeEmptyOpenNotes();
+          state.openNoteIds.delete(node.id);
+          render();
+        } else {
+          state.openNoteIds.add(node.id);
+          render();
+          focusNote(node.id);
+        }
+      };
+      actionsEl.appendChild(noteBtn);
+
+      if (depth > 0 && !isFiltered) {
+        const outdentBtn = document.createElement("button");
+        outdentBtn.className = "outdent-btn";
+        outdentBtn.textContent = "⇤";
+        outdentBtn.title = "Sposta a livello superiore (Shift+Tab)";
+        outdentBtn.onclick = (e) => {
+          e.stopPropagation();
+          outdentNode(node.id);
+        };
+        actionsEl.appendChild(outdentBtn);
+      }
+
+      if (!isRoot) {
+        const prio = document.createElement("span");
+        prio.className = "prio-badge";
+        prio.dataset.prio = node.priority || 0;
+        prio.textContent = PRIO_LABELS[node.priority || 0];
+        prio.title = "Clicca per cambiare priorità (P1 Alta, P2 Media, P3 Bassa)";
+        prio.onclick = () => {
+          const order = [0, 3, 2, 1];
+          node.priority = order[(order.indexOf(node.priority || 0) + 1) % order.length];
+          saveState();
+          render();
+        };
+
+        actionsEl.appendChild(prio);
+      }
+
+      row.append(toggle, cb, contentEl, actionsEl);
+      return row;
+    }
+
+    function renderTreeNodes(nodes, container, depth) {
+      nodes.forEach((node) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "node-wrapper";
+
+        const row = buildNodeRow(node, depth);
+        wrapper.appendChild(row);
+
+        if (node.children?.length) {
+          const childrenBox = document.createElement("div");
+          childrenBox.className = `children-container ${node.collapsed ? "collapsed" : ""}`;
+          renderTreeNodes(node.children, childrenBox, depth + 1);
+          wrapper.appendChild(childrenBox);
+        }
+
+        container.appendChild(wrapper);
+      });
+    }
+
+    function renderFilteredTreeNodes(filteredItems, container, depth) {
+      filteredItems.forEach(({ node, selfMatches, children }) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "node-wrapper";
+
+        const row = buildNodeRow(node, depth, {
+          isFiltered: true,
+          selfMatches,
+          hasFilteredChildren: children.length > 0,
+        });
+        wrapper.appendChild(row);
+
+        if (children.length > 0) {
+          const childrenBox = document.createElement("div");
+          childrenBox.className = "children-container";
+          renderFilteredTreeNodes(children, childrenBox, depth + 1);
+          wrapper.appendChild(childrenBox);
+        }
+
+        container.appendChild(wrapper);
+      });
+    }
+
+    // --- Controllo da Tastiera ---
+    function handleKeyDown(e, id) {
+      const ctx = findNodeContext(id);
+      if (!ctx) return;
+
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        const newNode = {
+          id: crypto.randomUUID(),
+          text: "",
+          note: "",
+          done: false,
+          completedAt: null,
+          suspended: false,
+          unsuspendAt: null,
+          priority: 0,
+          collapsed: false,
+          children: [],
+        };
+        ctx.list.splice(ctx.index + 1, 0, newNode);
+        saveState();
+        render();
+        focusNode(newNode.id);
+      } else if (e.key === "Tab" && !e.shiftKey) {
+        e.preventDefault();
+        if (ctx.index > 0) {
+          const prevSibling = ctx.list[ctx.index - 1];
+          ctx.list.splice(ctx.index, 1);
+          prevSibling.collapsed = false;
+          prevSibling.children.push(ctx.node);
+          saveState();
+          render();
+          focusNode(ctx.node.id);
+        }
+      } else if (e.key === "Tab" && e.shiftKey) {
+        e.preventDefault();
+        outdentNode(id);
+      } else if (
+        e.key === "Backspace" &&
+        ctx.node.text.trim() === "" &&
+        (!ctx.node.note || ctx.node.note.trim() === "") &&
+        ctx.node.children.length === 0
+      ) {
+        e.preventDefault();
+        const allRows = [...document.querySelectorAll(".node-row")];
+        const currentPos = allRows.findIndex((r) => r.dataset.id === id);
+        const prevId = currentPos > 0 ? allRows[currentPos - 1].dataset.id : null;
+        ctx.list.splice(ctx.index, 1);
+        saveState();
+        render();
+        if (prevId) focusNode(prevId);
+      } else if (e.altKey && e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        if (state.openNoteIds.has(ctx.node.id)) {
+          sanitizeEmptyOpenNotes();
+          state.openNoteIds.delete(ctx.node.id);
+          render();
+          focusNode(ctx.node.id);
+        } else {
+          state.openNoteIds.add(ctx.node.id);
+          render();
+          focusNote(ctx.node.id);
+        }
+      } else if (e.altKey && ["0", "1", "2", "3"].includes(e.key)) {
+        e.preventDefault();
+        if (ctx.depth === 0) {
+          focusNode(ctx.node.id);
+          return;
+        }
+        const map = { "1": 3, "2": 2, "3": 1, "0": 0 };
+        ctx.node.priority = map[e.key];
+        saveState();
+        render();
+        focusNode(ctx.node.id);
+      }
+    }
+
+    // Scorciatoia globale Ctrl+F / Cmd+F per ricerca rapida
+    window.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        if (state.view === "archive") {
+          document.querySelector(".archive-search")?.focus();
+        } else {
+          const searchEl = document.getElementById("task-search");
+          searchEl.focus();
+          searchEl.select();
+        }
+      }
+    });
+
+    // --- Eventi Ricerca & Filtri ---
+    document.getElementById("task-search").oninput = (e) => {
+      state.searchQuery = e.target.value;
+      render();
+    };
+
+    document.getElementById("btn-clear-search").onclick = () => {
+      state.searchQuery = "";
+      render();
+      document.getElementById("task-search").focus();
+    };
+
+    document.getElementById("filter-chips").onclick = (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+
+      if (btn.dataset.filterStatus) {
+        state.filterStatus = btn.dataset.filterStatus;
+        render();
+      } else if (btn.dataset.filterPrio) {
+        const prioVal = Number(btn.dataset.filterPrio);
+        state.filterPriority = state.filterPriority === prioVal ? null : prioVal;
+        render();
+      } else if (btn.id === "btn-reset-filters") {
+        state.searchQuery = "";
+        state.filterStatus = "all";
+        state.filterPriority = null;
+        render();
+      }
+    };
+
+    // --- Eventi Selettore Tema & Editor Colori ---
+    document.getElementById("btn-theme").onclick = () => {
+      state.themeDrawerOpen = !state.themeDrawerOpen;
+      if (state.themeDrawerOpen) {
+        state.backupDrawerOpen = false;
+      }
+      updateThemeDrawerUI();
+      updateBackupDrawerUI();
+    };
+
+    document.getElementById("theme-mode-bar").onclick = (e) => {
+      const btn = e.target.closest("[data-theme-mode]");
+      if (!btn) return;
+      state.theme.mode = btn.dataset.themeMode;
+      applyCurrentTheme();
+      saveThemeState();
+      updateThemeDrawerUI();
+    };
+
+    document.getElementById("btn-clone-light").onclick = () => {
+      state.theme.mode = "custom";
+      state.theme.customColors = { ...PRESET_THEMES.light };
+      applyCurrentTheme();
+      saveThemeState();
+      updateThemeDrawerUI();
+    };
+
+    document.getElementById("btn-clone-dark").onclick = () => {
+      state.theme.mode = "custom";
+      state.theme.customColors = { ...PRESET_THEMES.dark };
+      applyCurrentTheme();
+      saveThemeState();
+      updateThemeDrawerUI();
+    };
+
+    document.getElementById("btn-save-preset").onclick = () => {
+      const nameInput = document.getElementById("preset-name-input");
+      const rawName = nameInput.value.trim();
+      const name = rawName || `Tema ${state.theme.savedPresets.length + 1}`;
+
+      const existingIdx = state.theme.savedPresets.findIndex(
+        (p) => p.name.toLowerCase() === name.toLowerCase()
+      );
+      const presetObj = {
+        id: existingIdx !== -1 ? state.theme.savedPresets[existingIdx].id : crypto.randomUUID(),
+        name,
+        colors: { ...state.theme.customColors },
+      };
+
+      if (existingIdx !== -1) {
+        state.theme.savedPresets[existingIdx] = presetObj;
+      } else {
+        state.theme.savedPresets.unshift(presetObj);
+      }
+
+      nameInput.value = "";
+      saveThemeState();
+      renderSavedPresets();
+      updateBackupDrawerUI();
+      showToast(`Tema "${name}" salvato`);
+    };
+
+    // --- Pulsanti Toolbar & Snapshot ---
+    document.getElementById("btn-add-root").onclick = () => {
+      if (isFilterActive()) {
+        state.searchQuery = "";
+        state.filterStatus = "all";
+        state.filterPriority = null;
+      }
+      const newNode = {
+        id: crypto.randomUUID(),
+        text: "",
+        note: "",
+        done: false,
+        completedAt: null,
+        suspended: false,
+        unsuspendAt: null,
+        priority: 0,
+        collapsed: false,
+        children: [],
+      };
+      state.tasks.push(newNode);
+      saveState();
+      render();
+      focusNode(newNode.id);
+    };
+
+    document.getElementById("btn-sort-priority").onclick = (e) => {
+      state.sortByPriority = !state.sortByPriority;
+      e.target.textContent = state.sortByPriority ? "Priorità: Attiva" : "Priorità: Manuale";
+      e.target.classList.toggle("active", state.sortByPriority);
+      render();
+    };
+
+    document.getElementById("btn-archive-now").onclick = () => {
+      const count = archiveCompletedTasks({ manual: true });
+      if (count > 0) {
+        render();
+        showToast(`${count} ${count === 1 ? "voce archiviata" : "voci archiviate"}`);
+      }
+    };
+
+    document.getElementById("btn-view-archive").onclick = () => {
+      state.view = state.view === "archive" ? "tasks" : "archive";
+      render();
+    };
+
+    document.getElementById("btn-snapshots").onclick = () => {
+      state.backupDrawerOpen = !state.backupDrawerOpen;
+      if (state.backupDrawerOpen) {
+        state.themeDrawerOpen = false;
+      }
+      updateThemeDrawerUI();
+      updateBackupDrawerUI();
+    };
+
+    document.getElementById("btn-create-snapshot").onclick = () => {
+      createSnapshot("Istantanea manuale", false);
+    };
+
+    document.getElementById("btn-link-file").onclick = linkAutoBackupFile;
+    document.getElementById("btn-unlink-file").onclick = unlinkAutoBackupFile;
+
+    // Export standard (task + archivio)
+    document.getElementById("btn-export").onclick = () => {
+      const blob = new Blob(
+        [JSON.stringify({ tasks: state.tasks, archive: state.archive }, null, 2)],
+        { type: "application/json" }
+      );
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `sticky-todo-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(`Backup esportato (${countTotalNodes(state.tasks)} voci)`);
+    };
+
+    // Export completo (task + archivio + snapshot + temi)
+    document.getElementById("btn-export-full").onclick = () => {
+      const fullPayload = {
+        format: "sticky-todo-full-v1",
+        exportedAt: Date.now(),
+        tasks: state.tasks,
+        archive: state.archive,
+        snapshots: state.snapshots,
+        theme: state.theme,
+      };
+      const blob = new Blob([JSON.stringify(fullPayload, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `sticky-todo-completo-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(
+        `Esportazione completa: ${countTotalNodes(state.tasks)} task, ${state.archive.length} archivio, ${state.snapshots.length} snapshot, ${state.theme.savedPresets.length} temi`
+      );
+    };
+
+    document.getElementById("btn-import").onclick = () => {
+      document.getElementById("file-import").click();
+    };
+
+    document.getElementById("file-import").onchange = (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const parsed = JSON.parse(ev.target.result);
+          const rawTasks = Array.isArray(parsed)
+            ? parsed
+            : Array.isArray(parsed?.tasks)
+            ? parsed.tasks
+            : null;
+
+          if (!rawTasks) {
+            throw new Error("Formato non riconosciuto");
+          }
+
+          // Crea istantanea di sicurezza dello stato attuale prima di importare
+          createSnapshot(`Prima di importare "${file.name}"`, true);
+
+          const normalizedTasks = normalizeNodes(rawTasks, true);
+          const normalizedArchive = normalizeArchive(
+            Array.isArray(parsed?.archive) ? parsed.archive : []
+          );
+
+          state.tasks = normalizedTasks;
+          state.archive = normalizedArchive;
+          state.openNoteIds.clear();
+          state.openSuspendIds.clear();
+          processSuspendedNodes(state.tasks);
+          saveState();
+
+          const extras = [];
+
+          // Se il file contiene snapshot (esportazione completa), li integra preservando l'istantanea pre-import appena creata
+          if (Array.isArray(parsed?.snapshots) && parsed.snapshots.length > 0) {
+            const importedSnaps = normalizeSnapshotsList(parsed.snapshots);
+            const preImportSnap = state.snapshots[0];
+            state.snapshots = [preImportSnap, ...importedSnaps].slice(0, MAX_SNAPSHOTS);
+            saveSnapshots();
+            extras.push(`${importedSnaps.length} snapshot`);
+          }
+
+          // Se il file contiene impostazioni tema / preset salvati, li applica e salva
+          if (parsed?.theme && typeof parsed.theme === "object") {
+            state.theme = normalizeThemeObject(parsed.theme);
+            applyCurrentTheme();
+            saveThemeState();
+            extras.push(
+              state.theme.savedPresets.length
+                ? `tema + ${state.theme.savedPresets.length} preset`
+                : "tema"
+            );
+          }
+
+          render();
+
+          const totalImported = countTotalNodes(normalizedTasks);
+          const archivePart = normalizedArchive.length
+            ? ` + ${normalizedArchive.length} archivio`
+            : "";
+          const extrasPart = extras.length ? ` (${extras.join(", ")})` : "";
+          showToast(`Backup importato: ${totalImported} voci${archivePart}${extrasPart}`);
+        } catch (err) {
+          showToast("Errore: file JSON non valido o struttura incompatibile", true);
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = "";
+    };
+
+    // Controllo archivio automatico e de-sospensioni ogni 30 minuti
+    setInterval(() => {
+      const unsuspended = processSuspendedNodes(state.tasks);
+      const archived = archiveCompletedTasks({ manual: false });
+      if (unsuspended) saveState();
+      if (unsuspended || archived > 0) render();
+    }, 30 * 60 * 1000);
+
+// Registrazione Service Worker per PWA (offline + installabilità)
+    if ("serviceWorker" in navigator && (window.location.protocol === "https:" || window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch((err) => {
+          console.warn("Registrazione Service Worker non riuscita:", err);
+        });
+      });
+    }
+
+    // Avvio
+    loadThemeState();
+    buildColorGrid();
+    loadSnapshots();
+    loadState();
+    processSuspendedNodes(state.tasks);
+    archiveCompletedTasks({ manual: false });
+    saveState();
+    render();
+  </script>
+</body>
+</html>
