@@ -1,4 +1,4 @@
-const CACHE_NAME = "sticky-todo-pwa-v5";
+const CACHE_NAME = "sticky-todo-pwa-v6";
 const CORE_ASSETS = [
   "./",
   "./index.html",

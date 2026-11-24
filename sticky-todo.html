@@ -745,7 +745,7 @@
       margin-top: 1px;
     }
 
-    /* Slot a larghezza fissa per ancorare sempre alla stessa posizione destra sospensione e note */
+    /* Slot ancorati a destra: visibili solo al passaggio del mouse se non già attivi */
     .slot-outdent {
       width: 22px;
       display: inline-flex;
@@ -778,8 +778,11 @@
       flex-shrink: 0;
     }
 
+    .node-row:not(:hover) .slot-outdent,
+    .node-row:not(:hover) .slot-suspend:has(.suspend-btn:not(.is-suspended):not(.is-open)),
     .node-row:not(:hover) .slot-note:has(.note-btn:not(.has-note):not(.is-open)) {
       width: 0;
+      min-width: 0;
       overflow: hidden;
     }
 
@@ -1010,34 +1013,33 @@
       padding-bottom: 3px;
     }
 
-    /* Colore barra di scorrimento laterale */
-    .tree-container,
-    .snapshot-list {
+    /* Colore barra di scorrimento laterale (Chromium/WebKit + standard) */
+    * {
       scrollbar-width: thin;
       scrollbar-color: var(--scroll-thumb) var(--scroll-track);
     }
 
-    .tree-container::-webkit-scrollbar,
-    .snapshot-list::-webkit-scrollbar {
+    *::-webkit-scrollbar {
       width: 10px;
       height: 10px;
     }
 
-    .tree-container::-webkit-scrollbar-track,
-    .snapshot-list::-webkit-scrollbar-track {
+    *::-webkit-scrollbar-track {
       background: var(--scroll-track);
     }
 
-    .tree-container::-webkit-scrollbar-thumb,
-    .snapshot-list::-webkit-scrollbar-thumb {
+    *::-webkit-scrollbar-thumb {
       background: var(--scroll-thumb);
       border-radius: 5px;
       border: 2px solid var(--scroll-track);
     }
 
-    .tree-container::-webkit-scrollbar-thumb:hover,
-    .snapshot-list::-webkit-scrollbar-thumb:hover {
+    *::-webkit-scrollbar-thumb:hover {
       background: var(--scroll-thumb-hover);
+    }
+
+    *::-webkit-scrollbar-corner {
+      background: var(--scroll-track);
     }
   
     /* Menu impostazioni compatto per schermi stretti */
@@ -1069,6 +1071,12 @@
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 5px;
+    }
+
+    @media (max-width: 340px) {
+      .mobile-settings-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
 
     .mobile-settings-item {
@@ -1103,24 +1111,23 @@
     /* Ottimizzazione smartphone / larghezze ridotte */
     @media (max-width: 600px) {
       html, body {
-        font-size: 14.5px;
-        overflow-x: hidden;
-        overflow-y: auto;
-      }
-
-      body {
-        min-height: 100%;
-        height: auto;
+        font-size: 14px;
+        overflow: hidden;
       }
 
       .toolbar {
         padding: 6px 8px;
-        gap: 6px;
+        gap: 4px;
+        flex-wrap: wrap;
       }
 
       .toolbar-left {
         flex-wrap: wrap;
-        gap: 4px;
+        gap: 3px;
+      }
+
+      .toolbar-right {
+        margin-left: auto;
       }
 
       .toolbar-right button:not(#btn-view-archive):not(#btn-mobile-settings) {
@@ -1134,8 +1141,8 @@
       }
 
       button {
-        padding: 5px 8px;
-        font-size: 12px;
+        padding: 4px 7px;
+        font-size: 11.5px;
       }
 
       .filter-bar {
@@ -1143,33 +1150,29 @@
       }
 
       .search-input {
-        font-size: 14px;
-        padding: 6px 28px 6px 9px;
+        font-size: 13.5px;
+        padding: 5px 26px 5px 8px;
       }
 
       .filter-chip {
-        font-size: 11.5px;
-        padding: 4px 8px;
+        font-size: 11px;
+        padding: 3px 7px;
       }
 
       .tree-container {
-        overflow-y: visible;
+        overflow-y: auto;
         padding: 8px 8px 20px 4px;
       }
 
       .node-row {
-        padding: 4px 4px;
-        gap: 6px;
+        padding: 3px 4px;
+        gap: 5px;
       }
 
       .checkbox {
-        width: 17px;
-        height: 17px;
+        width: 16px;
+        height: 16px;
         margin-top: 2px;
-      }
-
-      .node-btn, .outdent-btn, .suspend-btn, .prio-badge {
-        opacity: 1;
       }
 
       .color-grid {
@@ -1199,6 +1202,8 @@
       <button id="btn-mobile-settings" class="mobile-settings-btn" title="Impostazioni, tema e backup">⚙️</button>
       <input type="file" id="file-import" accept=".json" style="display:none" />
     </div>
+  </header>
+
   <!-- Menu impostazioni compatto per schermi stretti -->
   <section class="mobile-settings-drawer" id="mobile-settings-drawer">
     <div class="mobile-settings-title">Strumenti e impostazioni</div>
@@ -1209,7 +1214,6 @@
       <button class="mobile-settings-item" id="m-btn-import"><span>📂</span><span>Importa</span></button>
     </div>
   </section>
-  </header>
 
   <!-- Pannello Tema & Colori -->
   <section class="drawer-panel" id="theme-drawer">
@@ -1586,6 +1590,7 @@
       if (metaTheme) {
         metaTheme.setAttribute("content", topBarColor);
       }
+      document.documentElement.style.colorScheme = state.theme.mode === "dark" ? "dark" : "light";
     }
 
     function normalizeThemeObject(rawTheme) {
@@ -3596,7 +3601,7 @@ function syncMobileSettingsUI() {
       if (!isNarrow) {
         state.mobileSettingsOpen = false;
       }
-      drawer.classList.toggle("open", Boolean(state.mobileSettingsOpen) && isNarrow && state.view !== "archive");
+      drawer.classList.toggle("open", Boolean(state.mobileSettingsOpen) && isNarrow);
       mBtn.classList.toggle("active", Boolean(state.mobileSettingsOpen) && isNarrow);
 
       const mTheme = document.getElementById("m-btn-theme");
