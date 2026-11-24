@@ -778,6 +778,11 @@
       flex-shrink: 0;
     }
 
+    .node-row:not(:hover) .slot-note:has(.note-btn:not(.has-note):not(.is-open)) {
+      width: 0;
+      overflow: hidden;
+    }
+
     .note-btn, .outdent-btn, .suspend-btn {
       opacity: 0;
       font-size: 11px;
@@ -2936,20 +2941,6 @@
           const actionsEl = document.createElement("div");
           actionsEl.className = "row-actions";
 
-          const catTag = document.createElement("span");
-          catTag.className = "category-tag clickable";
-          catTag.textContent = categoryPath || "Livello principale";
-          catTag.title = "Clicca per tornare alla vista gerarchica";
-          catTag.onclick = () => {
-            state.sortByPriority = false;
-            const btn = document.getElementById("btn-sort-priority");
-            btn.textContent = "Priorità: Manuale";
-            btn.classList.remove("active");
-            render();
-            focusNode(node.id);
-          };
-          actionsEl.appendChild(catTag);
-
           const suspSlot = document.createElement("div");
           suspSlot.className = "slot-suspend";
           appendSuspendControls(suspSlot, node, isSuspendOpen);
@@ -2975,6 +2966,20 @@
           };
           noteSlot.appendChild(noteBtn);
           actionsEl.appendChild(noteSlot);
+
+          const catTag = document.createElement("span");
+          catTag.className = "category-tag clickable";
+          catTag.textContent = categoryPath || "Livello principale";
+          catTag.title = "Clicca per tornare alla vista gerarchica";
+          catTag.onclick = () => {
+            state.sortByPriority = false;
+            const btn = document.getElementById("btn-sort-priority");
+            btn.textContent = "Priorità: Manuale";
+            btn.classList.remove("active");
+            render();
+            focusNode(node.id);
+          };
+          actionsEl.appendChild(catTag);
           row.append(cb, contentEl, actionsEl);
           sectionEl.appendChild(row);
         });
@@ -3116,24 +3121,6 @@
       }
       actionsEl.appendChild(outdentSlot);
 
-      const prioSlot = document.createElement("div");
-      prioSlot.className = "slot-prio";
-      if (!isRoot) {
-        const prio = document.createElement("span");
-        prio.className = "prio-badge";
-        prio.dataset.prio = node.priority || 0;
-        prio.textContent = PRIO_LABELS[node.priority || 0];
-        prio.title = "Clicca per cambiare priorità (P1 Alta, P2 Media, P3 Bassa)";
-        prio.onclick = () => {
-          const order = [0, 3, 2, 1];
-          node.priority = order[(order.indexOf(node.priority || 0) + 1) % order.length];
-          saveState();
-          render();
-        };
-        prioSlot.appendChild(prio);
-      }
-      actionsEl.appendChild(prioSlot);
-
       const suspSlot = document.createElement("div");
       suspSlot.className = "slot-suspend";
       appendSuspendControls(suspSlot, node, isSuspendOpen);
@@ -3159,6 +3146,24 @@
       };
       noteSlot.appendChild(noteBtn);
       actionsEl.appendChild(noteSlot);
+
+      const prioSlot = document.createElement("div");
+      prioSlot.className = "slot-prio";
+      if (!isRoot) {
+        const prio = document.createElement("span");
+        prio.className = "prio-badge";
+        prio.dataset.prio = node.priority || 0;
+        prio.textContent = PRIO_LABELS[node.priority || 0];
+        prio.title = "Clicca per cambiare priorità (P1 Alta, P2 Media, P3 Bassa)";
+        prio.onclick = () => {
+          const order = [0, 3, 2, 1];
+          node.priority = order[(order.indexOf(node.priority || 0) + 1) % order.length];
+          saveState();
+          render();
+        };
+        prioSlot.appendChild(prio);
+      }
+      actionsEl.appendChild(prioSlot);
 
       row.append(toggle, cb, contentEl, actionsEl);
       return row;
