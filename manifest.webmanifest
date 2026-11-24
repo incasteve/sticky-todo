@@ -1,13 +1,13 @@
 {
-  "name": "To do — Sticky Task Manager",
+  "name": "To do",
   "short_name": "To do",
-  "description": "Gestore attività gerarchico in stile sticky note con note, sospensioni, priorità, archivio e backup.",
+  "description": "Gestore attività gerarchico in stile sticky note.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#ffffff",
-  "theme_color": "#0969da",
+  "theme_color": "#fafbfc",
   "lang": "it-IT",
   "icons": [
     {

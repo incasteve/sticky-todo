@@ -7,7 +7,7 @@
   <link rel="icon" href="todolist-favicon.ico" type="image/x-icon">
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
-  <meta name="theme-color" content="#0969da" />
+  <meta name="theme-color" content="#fafbfc" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -1345,9 +1345,10 @@
       } else {
         applyThemeColors(PRESET_THEMES.light);
       }
+      const topBarColor = activeColors["--surface"] || activeColors["--bg"] || "#fafbfc";
       const metaTheme = document.querySelector('meta[name="theme-color"]');
-      if (metaTheme && activeColors["--accent"]) {
-        metaTheme.setAttribute("content", activeColors["--accent"]);
+      if (metaTheme) {
+        metaTheme.setAttribute("content", topBarColor);
       }
     }
 
