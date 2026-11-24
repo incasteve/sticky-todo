@@ -36,6 +36,9 @@
       --p2-bg: #fff8c5;
       --p1: #2da44e;
       --p1-bg: #dafbe1;
+      --scroll-track: #fafbfc;
+      --scroll-thumb: #c5ccd4;
+      --scroll-thumb-hover: #8c959f;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -735,9 +738,44 @@
     .row-actions {
       display: flex;
       align-items: center;
+      justify-content: flex-end;
       gap: 2px;
       flex-shrink: 0;
+      margin-left: auto;
       margin-top: 1px;
+    }
+
+    /* Slot a larghezza fissa per ancorare sempre alla stessa posizione destra sospensione e note */
+    .slot-outdent {
+      width: 22px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .slot-prio {
+      width: 26px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .slot-suspend {
+      min-width: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-shrink: 0;
+    }
+
+    .slot-note {
+      width: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
 
     .note-btn, .outdent-btn, .suspend-btn {
@@ -966,6 +1004,178 @@
       padding-top: 3px;
       padding-bottom: 3px;
     }
+
+    /* Colore barra di scorrimento laterale */
+    .tree-container,
+    .snapshot-list {
+      scrollbar-width: thin;
+      scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+    }
+
+    .tree-container::-webkit-scrollbar,
+    .snapshot-list::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    .tree-container::-webkit-scrollbar-track,
+    .snapshot-list::-webkit-scrollbar-track {
+      background: var(--scroll-track);
+    }
+
+    .tree-container::-webkit-scrollbar-thumb,
+    .snapshot-list::-webkit-scrollbar-thumb {
+      background: var(--scroll-thumb);
+      border-radius: 5px;
+      border: 2px solid var(--scroll-track);
+    }
+
+    .tree-container::-webkit-scrollbar-thumb:hover,
+    .snapshot-list::-webkit-scrollbar-thumb:hover {
+      background: var(--scroll-thumb-hover);
+    }
+  
+    /* Menu impostazioni compatto per schermi stretti */
+    .mobile-settings-btn {
+      display: none;
+    }
+
+    .mobile-settings-drawer {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    .mobile-settings-drawer.open {
+      display: flex;
+    }
+
+    .mobile-settings-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .mobile-settings-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 5px;
+    }
+
+    .mobile-settings-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 6px 4px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 11px;
+      color: var(--fg);
+      white-space: nowrap;
+    }
+
+    .mobile-settings-item.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .mobile-settings-item.auto-linked {
+      background: var(--p1-bg);
+      border-color: color-mix(in srgb, var(--p1) 45%, transparent);
+      color: var(--p1);
+      font-weight: 600;
+    }
+
+    /* Ottimizzazione smartphone / larghezze ridotte */
+    @media (max-width: 600px) {
+      html, body {
+        font-size: 14.5px;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+
+      body {
+        min-height: 100%;
+        height: auto;
+      }
+
+      .toolbar {
+        padding: 6px 8px;
+        gap: 6px;
+      }
+
+      .toolbar-left {
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .toolbar-right button:not(#btn-view-archive):not(#btn-mobile-settings) {
+        display: none;
+      }
+
+      .mobile-settings-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+      }
+
+      button {
+        padding: 5px 8px;
+        font-size: 12px;
+      }
+
+      .filter-bar {
+        padding: 6px 8px;
+      }
+
+      .search-input {
+        font-size: 14px;
+        padding: 6px 28px 6px 9px;
+      }
+
+      .filter-chip {
+        font-size: 11.5px;
+        padding: 4px 8px;
+      }
+
+      .tree-container {
+        overflow-y: visible;
+        padding: 8px 8px 20px 4px;
+      }
+
+      .node-row {
+        padding: 4px 4px;
+        gap: 6px;
+      }
+
+      .checkbox {
+        width: 17px;
+        height: 17px;
+        margin-top: 2px;
+      }
+
+      .node-btn, .outdent-btn, .suspend-btn, .prio-badge {
+        opacity: 1;
+      }
+
+      .color-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hint-bar {
+        display: none;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -981,8 +1191,19 @@
       <button id="btn-snapshots" title="Snapshot locali, auto-backup ed esportazione completa">🕒 (0)</button>
       <button id="btn-export" title="Esporta backup JSON (task + archivio)">💾</button>
       <button id="btn-import" title="Importa backup JSON (standard o completo)">📂</button>
+      <button id="btn-mobile-settings" class="mobile-settings-btn" title="Impostazioni, tema e backup">⚙️</button>
       <input type="file" id="file-import" accept=".json" style="display:none" />
     </div>
+  <!-- Menu impostazioni compatto per schermi stretti -->
+  <section class="mobile-settings-drawer" id="mobile-settings-drawer">
+    <div class="mobile-settings-title">Strumenti e impostazioni</div>
+    <div class="mobile-settings-grid">
+      <button class="mobile-settings-item" id="m-btn-theme"><span>🎨</span><span>Tema</span></button>
+      <button class="mobile-settings-item" id="m-btn-snapshots"><span>🕒</span><span id="m-snap-label">Backup (0)</span></button>
+      <button class="mobile-settings-item" id="m-btn-export"><span>💾</span><span>Esporta</span></button>
+      <button class="mobile-settings-item" id="m-btn-import"><span>📂</span><span>Importa</span></button>
+    </div>
+  </section>
   </header>
 
   <!-- Pannello Tema & Colori -->
@@ -1110,6 +1331,9 @@
       { key: "--p2-bg", label: "Priorità P2 (sfondo)" },
       { key: "--p1", label: "Priorità P3 (testo)" },
       { key: "--p1-bg", label: "Priorità P3 (sfondo)" },
+      { key: "--scroll-track", label: "Scrollbar sfondo" },
+      { key: "--scroll-thumb", label: "Scrollbar cursore" },
+      { key: "--scroll-thumb-hover", label: "Scrollbar cursore hover" },
     ];
 
     const PRESET_THEMES = {
@@ -1133,6 +1357,9 @@
         "--p2-bg": "#fff8c5",
         "--p1": "#2da44e",
         "--p1-bg": "#dafbe1",
+        "--scroll-track": "#fafbfc",
+        "--scroll-thumb": "#c5ccd4",
+        "--scroll-thumb-hover": "#8c959f",
       },
       dark: {
         "--bg": "#0d1117",
@@ -1154,6 +1381,9 @@
         "--p2-bg": "#3b2e11",
         "--p1": "#56d364",
         "--p1-bg": "#14351d",
+        "--scroll-track": "#161b22",
+        "--scroll-thumb": "#30363d",
+        "--scroll-thumb-hover": "#484f58",
       },
     };
 
@@ -1168,6 +1398,7 @@
       filterPriority: null, // null | 1 | 2 | 3
       openNoteIds: new Set(),
       openSuspendIds: new Set(),
+      mobileSettingsOpen: false,
       backupDrawerOpen: false,
       themeDrawerOpen: false,
       theme: {
@@ -2195,6 +2426,7 @@
 
       updateThemeDrawerUI();
       updateBackupDrawerUI();
+      syncMobileSettingsUI();
 
       // Aggiorna stato UI filtri
       const searchInput = document.getElementById("task-search");
@@ -2704,8 +2936,27 @@
           const actionsEl = document.createElement("div");
           actionsEl.className = "row-actions";
 
-          appendSuspendControls(actionsEl, node, isSuspendOpen);
+          const catTag = document.createElement("span");
+          catTag.className = "category-tag clickable";
+          catTag.textContent = categoryPath || "Livello principale";
+          catTag.title = "Clicca per tornare alla vista gerarchica";
+          catTag.onclick = () => {
+            state.sortByPriority = false;
+            const btn = document.getElementById("btn-sort-priority");
+            btn.textContent = "Priorità: Manuale";
+            btn.classList.remove("active");
+            render();
+            focusNode(node.id);
+          };
+          actionsEl.appendChild(catTag);
 
+          const suspSlot = document.createElement("div");
+          suspSlot.className = "slot-suspend";
+          appendSuspendControls(suspSlot, node, isSuspendOpen);
+          actionsEl.appendChild(suspSlot);
+
+          const noteSlot = document.createElement("div");
+          noteSlot.className = "slot-note";
           const noteBtn = document.createElement("button");
           noteBtn.className = `note-btn ${hasNote ? "has-note" : ""} ${isNoteOpen ? "is-open" : ""}`;
           noteBtn.textContent = "📝";
@@ -2722,21 +2973,8 @@
               focusNote(node.id);
             }
           };
-
-          const catTag = document.createElement("span");
-          catTag.className = "category-tag clickable";
-          catTag.textContent = categoryPath || "Livello principale";
-          catTag.title = "Clicca per tornare alla vista gerarchica";
-          catTag.onclick = () => {
-            state.sortByPriority = false;
-            const btn = document.getElementById("btn-sort-priority");
-            btn.textContent = "Priorità: Manuale";
-            btn.classList.remove("active");
-            render();
-            focusNode(node.id);
-          };
-
-          actionsEl.append(noteBtn, catTag);
+          noteSlot.appendChild(noteBtn);
+          actionsEl.appendChild(noteSlot);
           row.append(cb, contentEl, actionsEl);
           sectionEl.appendChild(row);
         });
@@ -2863,8 +3101,46 @@
       const actionsEl = document.createElement("div");
       actionsEl.className = "row-actions";
 
-      appendSuspendControls(actionsEl, node, isSuspendOpen);
+      const outdentSlot = document.createElement("div");
+      outdentSlot.className = "slot-outdent";
+      if (depth > 0 && !isFiltered) {
+        const outdentBtn = document.createElement("button");
+        outdentBtn.className = "outdent-btn";
+        outdentBtn.textContent = "⇤";
+        outdentBtn.title = "Sposta a livello superiore (Shift+Tab)";
+        outdentBtn.onclick = (e) => {
+          e.stopPropagation();
+          outdentNode(node.id);
+        };
+        outdentSlot.appendChild(outdentBtn);
+      }
+      actionsEl.appendChild(outdentSlot);
 
+      const prioSlot = document.createElement("div");
+      prioSlot.className = "slot-prio";
+      if (!isRoot) {
+        const prio = document.createElement("span");
+        prio.className = "prio-badge";
+        prio.dataset.prio = node.priority || 0;
+        prio.textContent = PRIO_LABELS[node.priority || 0];
+        prio.title = "Clicca per cambiare priorità (P1 Alta, P2 Media, P3 Bassa)";
+        prio.onclick = () => {
+          const order = [0, 3, 2, 1];
+          node.priority = order[(order.indexOf(node.priority || 0) + 1) % order.length];
+          saveState();
+          render();
+        };
+        prioSlot.appendChild(prio);
+      }
+      actionsEl.appendChild(prioSlot);
+
+      const suspSlot = document.createElement("div");
+      suspSlot.className = "slot-suspend";
+      appendSuspendControls(suspSlot, node, isSuspendOpen);
+      actionsEl.appendChild(suspSlot);
+
+      const noteSlot = document.createElement("div");
+      noteSlot.className = "slot-note";
       const noteBtn = document.createElement("button");
       noteBtn.className = `note-btn ${hasNote ? "has-note" : ""} ${isNoteOpen ? "is-open" : ""}`;
       noteBtn.textContent = "📝";
@@ -2881,35 +3157,8 @@
           focusNote(node.id);
         }
       };
-      actionsEl.appendChild(noteBtn);
-
-      if (depth > 0 && !isFiltered) {
-        const outdentBtn = document.createElement("button");
-        outdentBtn.className = "outdent-btn";
-        outdentBtn.textContent = "⇤";
-        outdentBtn.title = "Sposta a livello superiore (Shift+Tab)";
-        outdentBtn.onclick = (e) => {
-          e.stopPropagation();
-          outdentNode(node.id);
-        };
-        actionsEl.appendChild(outdentBtn);
-      }
-
-      if (!isRoot) {
-        const prio = document.createElement("span");
-        prio.className = "prio-badge";
-        prio.dataset.prio = node.priority || 0;
-        prio.textContent = PRIO_LABELS[node.priority || 0];
-        prio.title = "Clicca per cambiare priorità (P1 Alta, P2 Media, P3 Bassa)";
-        prio.onclick = () => {
-          const order = [0, 3, 2, 1];
-          node.priority = order[(order.indexOf(node.priority || 0) + 1) % order.length];
-          saveState();
-          render();
-        };
-
-        actionsEl.appendChild(prio);
-      }
+      noteSlot.appendChild(noteBtn);
+      actionsEl.appendChild(noteSlot);
 
       row.append(toggle, cb, contentEl, actionsEl);
       return row;
@@ -3332,6 +3581,71 @@
         });
       });
     }
+
+function syncMobileSettingsUI() {
+      const drawer = document.getElementById("mobile-settings-drawer");
+      const mBtn = document.getElementById("btn-mobile-settings");
+      if (!drawer || !mBtn) return;
+
+      const isNarrow = window.innerWidth <= 600;
+      if (!isNarrow) {
+        state.mobileSettingsOpen = false;
+      }
+      drawer.classList.toggle("open", Boolean(state.mobileSettingsOpen) && isNarrow && state.view !== "archive");
+      mBtn.classList.toggle("active", Boolean(state.mobileSettingsOpen) && isNarrow);
+
+      const mTheme = document.getElementById("m-btn-theme");
+      const mSnap = document.getElementById("m-btn-snapshots");
+      const mSnapLabel = document.getElementById("m-snap-label");
+      if (mTheme) mTheme.classList.toggle("active", Boolean(state.themeDrawerOpen));
+      if (mSnap) {
+        mSnap.classList.toggle("active", Boolean(state.backupDrawerOpen));
+        mSnap.classList.toggle("auto-linked", Boolean(autoBackupFileHandle) && !state.backupDrawerOpen);
+      }
+      if (mSnapLabel) mSnapLabel.textContent = `Backup (${state.snapshots.length})`;
+
+      const hintBar = document.getElementById("hint-bar");
+      if (hintBar && state.view !== "archive") {
+        hintBar.style.display = isNarrow ? "none" : "flex";
+      }
+    }
+
+    document.getElementById("btn-mobile-settings")?.addEventListener("click", () => {
+      state.mobileSettingsOpen = !state.mobileSettingsOpen;
+      if (!state.mobileSettingsOpen) {
+        state.themeDrawerOpen = false;
+        state.backupDrawerOpen = false;
+        updateThemeDrawerUI();
+        updateBackupDrawerUI();
+      }
+      syncMobileSettingsUI();
+    });
+
+    document.getElementById("m-btn-theme")?.addEventListener("click", () => {
+      state.themeDrawerOpen = !state.themeDrawerOpen;
+      if (state.themeDrawerOpen) state.backupDrawerOpen = false;
+      updateThemeDrawerUI();
+      updateBackupDrawerUI();
+      syncMobileSettingsUI();
+    });
+
+    document.getElementById("m-btn-snapshots")?.addEventListener("click", () => {
+      state.backupDrawerOpen = !state.backupDrawerOpen;
+      if (state.backupDrawerOpen) state.themeDrawerOpen = false;
+      updateThemeDrawerUI();
+      updateBackupDrawerUI();
+      syncMobileSettingsUI();
+    });
+
+    document.getElementById("m-btn-export")?.addEventListener("click", () => {
+      document.getElementById("btn-export")?.click();
+    });
+
+    document.getElementById("m-btn-import")?.addEventListener("click", () => {
+      document.getElementById("btn-import")?.click();
+    });
+
+    window.addEventListener("resize", syncMobileSettingsUI);
 
     // Avvio
     loadThemeState();
